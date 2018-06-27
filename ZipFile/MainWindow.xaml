@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:ZipFile"
         mc:Ignorable="d"
-        Title="MainWindow" Height="280" Width="500" ResizeMode="NoResize">
+        Title="MainWindow" Height="280" Width="500" ResizeMode="NoResize" WindowStartupLocation="CenterScreen">
 	<Window.InputBindings>
 		<KeyBinding Command="{Binding StartCom}" Key="Enter"/>
 	</Window.InputBindings>
@@ -30,8 +30,8 @@
 
 		<StackPanel Grid.Row="1" Margin="5" IsEnabled="{Binding KeyEncDecIsEnable, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Orientation="Horizontal" VerticalAlignment="Center" HorizontalAlignment="Center">
 
-			<RadioButton VerticalAlignment="Center" Grid.Column="0" HorizontalAlignment="Center" Content="Сжать" FontSize="14" GroupName="IsCrypted" IsChecked="{Binding IsEncrypt, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" VerticalContentAlignment="Center" Margin="10 0"/>
-			<RadioButton VerticalAlignment="Center" Grid.Column="1" HorizontalAlignment="Center" Content="Разжать" FontSize="14" GroupName="IsCrypted" VerticalContentAlignment="Center" Margin="10 0"/>
+			<RadioButton VerticalAlignment="Center" Grid.Column="0" HorizontalAlignment="Center" Content="Сжать" FontSize="14" GroupName="IsZipped" IsChecked="{Binding IsZip, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" VerticalContentAlignment="Center" Margin="10 0"/>
+			<RadioButton VerticalAlignment="Center" Grid.Column="1" HorizontalAlignment="Center" Content="Разжать" FontSize="14" GroupName="IsZipped" VerticalContentAlignment="Center" Margin="10 0"/>
 		</StackPanel>
 
 		<StackPanel Margin="5" Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right">
