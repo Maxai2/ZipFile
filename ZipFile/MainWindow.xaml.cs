@@ -1,5 +1,6 @@
 ﻿using Microsoft.Win32;
 using System;
+using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.IO;
 using System.IO.Compression;
@@ -12,6 +13,8 @@ namespace ZipFile
 {
     public partial class MainWindow : Window, INotifyPropertyChanged
     {
+        public ObservableCollection<double> ProgBar { get; set; }
+
         private bool isZip = true;
         public bool IsZip
         {
@@ -48,6 +51,11 @@ namespace ZipFile
             OpenFile.InitialDirectory = AppDomain.CurrentDomain.BaseDirectory;
 
             OpenFile.RestoreDirectory = true;
+
+            ProgBar = new ObservableCollection<double>()
+            {
+                12.5
+            };
         }
 
         //--------------------------------------------------------------------
@@ -98,9 +106,11 @@ namespace ZipFile
 
                             var fileLength = fileText.Length;
 
+                            ProgBar.Clear();
+
                             if (fileLength < 1000)
                             {
-
+                                
                             }
                             else
                             if (1000 <= fileLength && fileLength < 2000)

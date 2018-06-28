@@ -39,18 +39,15 @@
 			<Button Content="Отмена" Width="70" Margin="5 0" Command="{Binding CancelCom}"/>
 		</StackPanel>
 
-		<StackPanel Grid.Row="3" Height="Auto">
+		<ListBox Grid.Row="3" Height="Auto" ItemsSource="{Binding ProgBar}">
 
-			<ListBox>
-
-				<ListBox.ItemTemplate>
-					<DataTemplate>
-							<ProgressBar Value="{Binding }" Height="20" Margin="0 2"/>
-					</DataTemplate>
-				</ListBox.ItemTemplate>
-			</ListBox>
-
-		</StackPanel>
+			<ListBox.ItemTemplate>
+				<DataTemplate>
+					<TextBlock Text="{Binding}" Height="20" Margin="0 2"/>
+				</DataTemplate>
+			</ListBox.ItemTemplate>
+			
+		</ListBox>
 
 	</Grid>
 </Window>
