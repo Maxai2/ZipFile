@@ -5,10 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:ZipFile"
         mc:Ignorable="d"
-        Title="MainWindow" Height="280" Width="500" ResizeMode="NoResize" WindowStartupLocation="CenterScreen">
-	<Window.InputBindings>
-		<KeyBinding Command="{Binding StartCom}" Key="Enter"/>
-	</Window.InputBindings>
+        Title="MainWindow" Height="{Binding WinHeight, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Width="500" ResizeMode="NoResize" WindowStartupLocation="CenterScreen">
 
 	<Grid Margin="10">
 		<Grid.RowDefinitions>
@@ -39,15 +36,16 @@
 			<Button Content="Отмена" Width="70" Margin="5 0" Command="{Binding CancelCom}"/>
 		</StackPanel>
 
-		<ListBox Grid.Row="3" Height="Auto" ItemsSource="{Binding ProgBar}">
+		<StackPanel Grid.Row="3">
 
-			<ListBox.ItemTemplate>
-				<DataTemplate>
-					<TextBlock Text="{Binding}" Height="20" Margin="0 2"/>
-				</DataTemplate>
-			</ListBox.ItemTemplate>
-			
-		</ListBox>
+			<ProgressBar Height="20" Visibility="{Binding FirstThreadVis, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Value="{Binding FirstThreadProg, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Margin="0 5"/>
+			<ProgressBar Height="20" Visibility="{Binding SecondThreadVis, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Value="{Binding SecondThreadProg, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Margin="0 5"/>
+			<ProgressBar Height="20" Visibility="{Binding ThirdThreadVis, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Value="{Binding ThirdThreadProg, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Margin="0 5"/>
+			<ProgressBar Height="20" Visibility="{Binding FourthThreadVis, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Value="{Binding FourthThreadProg, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Margin="0 5"/>
+			<ProgressBar Height="20" Visibility="{Binding FifthThreadVis, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Value="{Binding FifthThreadProg, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Margin="0 5"/>
+			<ProgressBar Height="20" Visibility="{Binding SixthThreadVis, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Value="{Binding SixthThreadProg, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Margin="0 5"/>
+
+		</StackPanel>
 
 	</Grid>
 </Window>

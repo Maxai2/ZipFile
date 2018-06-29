@@ -13,8 +13,6 @@ namespace ZipFile
 {
     public partial class MainWindow : Window, INotifyPropertyChanged
     {
-        public ObservableCollection<double> ProgBar { get; set; }
-
         private bool isZip = true;
         public bool IsZip
         {
@@ -37,6 +35,83 @@ namespace ZipFile
             }
         }
 
+        private double winHeight = 160;
+        public double WinHeight
+        {
+            get => winHeight; 
+            set
+            {
+                winHeight = value;
+                OnPropertyChanged();
+            }
+        }
+
+        private Visibility firstThreadVis = Visibility.Collapsed;
+        public Visibility FirstThreadVis
+        {
+            get => firstThreadVis; 
+            set
+            {
+                firstThreadVis = value;
+                OnPropertyChanged();
+            }
+        }
+
+        private Visibility secondThreadVis = Visibility.Collapsed;
+        public Visibility SecondThreadVis
+        {
+            get => secondThreadVis;
+            set
+            {
+                secondThreadVis = value;
+                OnPropertyChanged();
+            }
+        }
+
+        private Visibility thirdThreadVis = Visibility.Collapsed;
+        public Visibility ThirdThreadVis
+        {
+            get => thirdThreadVis;
+            set
+            {
+                thirdThreadVis = value;
+                OnPropertyChanged();
+            }
+        }
+
+        private Visibility fourthThreadVis = Visibility.Collapsed;
+        public Visibility FourthThreadVis
+        {
+            get => fourthThreadVis;
+            set
+            {
+                fourthThreadVis = value;
+                OnPropertyChanged();
+            }
+        }
+
+        private Visibility fifthThreadVis = Visibility.Collapsed;
+        public Visibility FifthThreadVis
+        {
+            get => fifthThreadVis;
+            set
+            {
+                fifthThreadVis = value;
+                OnPropertyChanged();
+            }
+        }
+
+        private Visibility sixthThreadVis = Visibility.Collapsed;
+        public Visibility SixthThreadVis
+        {
+            get => sixthThreadVis;
+            set
+            {
+                sixthThreadVis = value;
+                OnPropertyChanged();
+            }
+        }
+
         //--------------------------------------------------------------------
 
         OpenFileDialog OpenFile;
@@ -51,11 +126,6 @@ namespace ZipFile
             OpenFile.InitialDirectory = AppDomain.CurrentDomain.BaseDirectory;
 
             OpenFile.RestoreDirectory = true;
-
-            ProgBar = new ObservableCollection<double>()
-            {
-                12.5
-            };
         }
 
         //--------------------------------------------------------------------
@@ -104,40 +174,87 @@ namespace ZipFile
                                 fileText = Encoding.Default.GetString(array);
                             }
 
-                            var fileLength = fileText.Length;
+                            //var zipResult = ZipStr(fileText);
 
-                            ProgBar.Clear();
+                            var UnZipResult = UnZipStr(Encoding.ASCII.GetBytes(fileText));
+
+
+                            using (FileStream fstream = new FileStream(FilePath, FileMode.OpenOrCreate))
+                            {
+                               // byte[] array = System.Text.Encoding.Default.GetBytes(fileText);
+
+                                fstream.Write(Encoding.ASCII.GetBytes(UnZipResult), 0, UnZipResult.Length);
+                            }
+
+
+                            return;
+
+                            var fileLength = fileText.Length;
 
                             if (fileLength < 1000)
                             {
-                                
+                                FirstThreadVis = Visibility.Visible;
+
+                                WinHeight = 180;
                             }
                             else
                             if (1000 <= fileLength && fileLength < 2000)
                             {
+                                FirstThreadVis = Visibility.Visible;
+                                SecondThreadVis = Visibility.Visible;
 
+                                WinHeight = 210;
                             }
                             else
                             if (2000 <= fileLength && fileLength < 4000)
                             {
+                                FirstThreadVis = Visibility.Visible;
+                                SecondThreadVis = Visibility.Visible;
+                                ThirdThreadVis = Visibility.Visible;
 
+                                WinHeight = 240;
                             }
                             else
                             if (4000 <= fileLength && fileLength < 8000)
                             {
+                                FirstThreadVis = Visibility.Visible;
+                                SecondThreadVis = Visibility.Visible;
+                                ThirdThreadVis = Visibility.Visible;
+                                FourthThreadVis = Visibility.Visible;
 
+                                WinHeight = 270;
                             }
                             else
                             if (8000 <= fileLength && fileLength < 16000)
                             {
+                                FirstThreadVis = Visibility.Visible;
+                                SecondThreadVis = Visibility.Visible;
+                                ThirdThreadVis = Visibility.Visible;
+                                FourthThreadVis = Visibility.Visible;
+                                FifthThreadVis = Visibility.Visible;
 
+                                WinHeight = 300;
                             }
                             else
                             if (16000 <= fileLength)
                             {
+                                FirstThreadVis = Visibility.Visible;
+                                SecondThreadVis = Visibility.Visible;
+                                ThirdThreadVis = Visibility.Visible;
+                                FourthThreadVis = Visibility.Visible;
+                                FifthThreadVis = Visibility.Visible;
+                                SixthThreadVis = Visibility.Visible;
 
+                                WinHeight = 330;
                             }
 
+                        },
+                        (param) =>
+                        {
+                            if (FilePath == "")
+                                return false;
+                            else
+                                return true;
                         });
                 }
 
@@ -146,6 +263,8 @@ namespace ZipFile
         }
 
         //--------------------------------------------------------------------
+
+        bool change = true;
 
         private ICommand cancelCom;
         public ICommand CancelCom
@@ -157,7 +276,30 @@ namespace ZipFile
                     cancelCom = new RelayCommand(
                         (param) =>
                         {
+                            if (change)
+                            {
+                                FirstThreadVis = Visibility.Visible;
+                                SecondThreadVis = Visibility.Visible;
+                                ThirdThreadVis = Visibility.Visible;
+                                FourthThreadVis = Visibility.Visible;
+                                FifthThreadVis = Visibility.Visible;
+                                SixthThreadVis = Visibility.Visible;
 
+                                WinHeight = 330;
+                            }
+                            else
+                            {
+                                FirstThreadVis = Visibility.Collapsed;
+                                SecondThreadVis = Visibility.Collapsed;
+                                ThirdThreadVis = Visibility.Collapsed;
+                                FourthThreadVis = Visibility.Collapsed;
+                                FifthThreadVis = Visibility.Collapsed;
+                                SixthThreadVis = Visibility.Collapsed;
+
+                                WinHeight = 160;
+                            }
+
+                            change = !change;
                         });
                 }
 

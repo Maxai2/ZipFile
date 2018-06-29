@@ -9,25 +9,25 @@ namespace ZipFile
 {
     public class ListBoxDataItem
     {
-        public SolidColorBrush BackColor { get; set; } // фон элемента
-        public string Title { get; set; } // текст элемента
+        //public SolidColorBrush BackColor { get; set; } // фон элемента
+        //public string Title { get; set; } // текст элемента
         public int Progress { get; set; } // прогресс
 
-        public ListBoxDataItem(string title, Color backColor, int progress = 0)
+        public ListBoxDataItem(int progress = 0)
         {
-            this.Title = title;
-            this.BackColor = new SolidColorBrush(backColor);
-            this.Progress = 0;
+          //  this.Title = title;
+          //  this.BackColor = new SolidColorBrush(backColor);
+            this.Progress = progress;
         }
 
-        public ListBoxDataItem(ListBoxDataItem item, int progress, Color backColor)
-            : this(item.Title, backColor, progress)
-        {
-        }
+        //public ListBoxDataItem(ListBoxDataItem item, int progress, Color backColor) : this(item.Title, backColor, progress)
+        //{
 
-        public ListBoxDataItem(ListBoxDataItem item, Color backColor)
-            : this(item.Title, backColor, item.Progress)
-        {
-        }
+        //}
+
+        //public ListBoxDataItem(ListBoxDataItem item, Color backColor) : this(item.Title, backColor, item.Progress)
+        //{
+
+        //}
     }
 }
