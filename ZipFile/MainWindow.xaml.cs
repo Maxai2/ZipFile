@@ -6,6 +6,8 @@ using System.IO;
 using System.IO.Compression;
 using System.Runtime.CompilerServices;
 using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
 
@@ -112,6 +114,91 @@ namespace ZipFile
             }
         }
 
+        private double firstThreadProg;
+        public double FirstThreadProg
+        {
+            get { return firstThreadProg; }
+            set { firstThreadProg = value; OnPropertyChanged(); }
+        }
+
+        private double secondThreadProg;
+        public double SecondThreadProg
+        {
+            get { return secondThreadProg; }
+            set { secondThreadProg = value; OnPropertyChanged(); }
+        }
+
+        private double thirdThreadProg;
+        public double ThirdThreadProg
+        {
+            get { return thirdThreadProg; }
+            set { thirdThreadProg = value; OnPropertyChanged(); }
+        }
+
+        private double fourthThreadProg;
+        public double FourthThreadProg
+        {
+            get { return fourthThreadProg; }
+            set { fourthThreadProg = value; OnPropertyChanged(); }
+        }
+
+        private double fifthThreadProg;
+        public double FifthThreadProg
+        {
+            get { return fifthThreadProg; }
+            set { fifthThreadProg = value; OnPropertyChanged(); }
+        }
+
+        private double sixthThreadProg;
+        public double SixthThreadProg
+        {
+            get { return sixthThreadProg; }
+            set { sixthThreadProg = value; OnPropertyChanged(); }
+        }
+
+        private double firstThreadMaxProg;
+        public double FirstThreadMaxProg
+        {
+            get { return firstThreadMaxProg; }
+            set { firstThreadMaxProg = value; OnPropertyChanged(); }
+        }
+
+        private double secondThreadMaxProg;
+        public double SecondThreadMaxProg
+        {
+            get { return secondThreadMaxProg; }
+            set { secondThreadMaxProg = value; OnPropertyChanged(); }
+        }
+
+        private double thirdThreadMaxProg;
+        public double ThirdThreadMaxProg
+        {
+            get { return thirdThreadMaxProg; }
+            set { thirdThreadMaxProg = value; OnPropertyChanged(); }
+        }
+
+        private double fourthThreadMaxProg;
+        public double FourthThreadMaxProg
+        {
+            get { return fourthThreadMaxProg; }
+            set { fourthThreadMaxProg = value; OnPropertyChanged(); }
+        }
+
+        private double fifthThreadMaxProg;
+        public double FifthThreadMaxProg
+        {
+            get { return fifthThreadMaxProg; }
+            set { fifthThreadMaxProg = value; OnPropertyChanged(); }
+        }
+
+        private double sixthThreadMaxProg;
+        public double SixthThreadMaxProg
+        {
+            get { return sixthThreadMaxProg; }
+            set { sixthThreadMaxProg = value; OnPropertyChanged(); }
+        }
+
+
         //--------------------------------------------------------------------
 
         OpenFileDialog OpenFile;
@@ -166,6 +253,7 @@ namespace ZipFile
                         (param) =>
                         {
                             byte[] array = null;
+
                             using (FileStream fstream = File.OpenRead(FilePath))
                             {
                                 array = new byte[fstream.Length];
@@ -173,89 +261,63 @@ namespace ZipFile
                                 fstream.Read(array, 0, array.Length);
                             }
 
+                            var Arrlength = array.Length;
+
+                            byte[] resArray = null;
+                            resArray = new byte[Arrlength];
+
                             if (IsZip)
                             {
-                                var zipResult = ZipStr(array);
-
-                                using (FileStream fstream = new FileStream(FilePath, FileMode.OpenOrCreate))
+                                if (Arrlength <= 500000)
                                 {
-                                    fstream.Write(zipResult, 0, zipResult.Length);
+                                    FirstThreadVis = Visibility.Visible;
+                                    FirstThreadMaxProg = Arrlength;
+
+                                    WinHeight = 180;
+
+                                    Task.Run(() => resArray = ZipStr(array, "FirstThreadProg"));
                                 }
+                                else
+                                {
+                                    FirstThreadVis = Visibility.Visible;
+                                    SecondThreadVis = Visibility.Visible;
 
+                                    Dispatcher.Invoke(() =>
+                                    {
+                                        SecondThreadMaxProg = FirstThreadMaxProg = Arrlength / 2;
+                                    });
 
+                                    WinHeight = 210;
+
+                                    byte[] ArrF = new byte[Arrlength / 2];
+                                    byte[] ArrS = new byte[Arrlength / 2];
+
+                                    for (int i = 0; i < Arrlength / 2; i++)
+                                    {
+                                        ArrF[i] = array[i];
+                                    }
+
+                                    for (int i = Arrlength / 2, j = 0; i < Arrlength - 1; i++, j++)
+                                    {
+                                        ArrS[j] = array[i];
+                                    }
+
+                                    var task1 = Task.Run(() => resArray = ZipStr(ArrF, "FirstThreadProg"));
+                                    var task2 = Task.Run(() => resArray = ZipStr(ArrS, "SecondThreadProg"));
+
+                                    task1.Wait();
+                                    task2.Wait();
+                                }
                             }
                             else
-                            {
-                                var UnZipResult = UnZipStr(FilePath, array);
+                                resArray = UnZipStr(array);
 
-                                using (FileStream fstream = new FileStream(FilePath, FileMode.OpenOrCreate))
-                                {
-                                    fstream.Write(UnZipResult, 0, UnZipResult.Length);
-                                }
+                            using (FileStream fstream = new FileStream(FilePath, FileMode.OpenOrCreate))
+                            {
+                                fstream.Write(resArray, 0, resArray.Length);
                             }
 
                             MessageBox.Show("Done");
-
-                            return;
-
-                            //var fileLength = fileText.Length;
-
-                            //if (fileLength < 1000)
-                            //{
-                            //    FirstThreadVis = Visibility.Visible;
-
-                            //    WinHeight = 180;
-                            //}
-                            //else
-                            //if (1000 <= fileLength && fileLength < 2000)
-                            //{
-                            //    FirstThreadVis = Visibility.Visible;
-                            //    SecondThreadVis = Visibility.Visible;
-
-                            //    WinHeight = 210;
-                            //}
-                            //else
-                            //if (2000 <= fileLength && fileLength < 4000)
-                            //{
-                            //    FirstThreadVis = Visibility.Visible;
-                            //    SecondThreadVis = Visibility.Visible;
-                            //    ThirdThreadVis = Visibility.Visible;
-
-                            //    WinHeight = 240;
-                            //}
-                            //else
-                            //if (4000 <= fileLength && fileLength < 8000)
-                            //{
-                            //    FirstThreadVis = Visibility.Visible;
-                            //    SecondThreadVis = Visibility.Visible;
-                            //    ThirdThreadVis = Visibility.Visible;
-                            //    FourthThreadVis = Visibility.Visible;
-
-                            //    WinHeight = 270;
-                            //}
-                            //else
-                            //if (8000 <= fileLength && fileLength < 16000)
-                            //{
-                            //    FirstThreadVis = Visibility.Visible;
-                            //    SecondThreadVis = Visibility.Visible;
-                            //    ThirdThreadVis = Visibility.Visible;
-                            //    FourthThreadVis = Visibility.Visible;
-                            //    FifthThreadVis = Visibility.Visible;
-
-                            //    WinHeight = 300;
-                            //}
-                            //else
-                            //if (16000 <= fileLength)
-                            //{
-                            //    FirstThreadVis = Visibility.Visible;
-                            //    SecondThreadVis = Visibility.Visible;
-                            //    ThirdThreadVis = Visibility.Visible;
-                            //    FourthThreadVis = Visibility.Visible;
-                            //    FifthThreadVis = Visibility.Visible;
-                            //    SixthThreadVis = Visibility.Visible;
-
-                            //    WinHeight = 330;
-                            //}
 
                         },
                         (param) =>
@@ -318,13 +380,64 @@ namespace ZipFile
 
         //--------------------------------------------------------------------
 
-        public static byte[] ZipStr(byte[] str)
+        static object zip = new object();
+
+        public byte[] ZipStr(byte[] str, string thread)
         {
             using (MemoryStream output = new MemoryStream())
             {
                 using (DeflateStream deflateZip = new DeflateStream(output, CompressionMode.Compress))
                 {
-                    deflateZip.Write(str, 0, str.Length);
+                    for (int i = 0; i < str.Length; i++)
+                    {
+                        lock (zip)
+                        {
+                            deflateZip.WriteByte(str[i]);
+
+
+                            switch (thread)
+                            {
+                                case "FirstThreadProg":
+                                    Dispatcher.Invoke(() =>
+                                    {
+                                        FirstThreadProg += 1;
+                                    });
+                                    break;
+                                case "SecondThreadProg":
+                                    Dispatcher.Invoke(() =>
+                                    {
+                                        SecondThreadProg += 1;
+                                    });
+                                    break;
+                                case "ThirdThreadProg":
+                                    Dispatcher.Invoke(() =>
+                                    {
+                                        ThirdThreadProg += 1;
+                                    });
+                                    break;
+                                case "FourthThreadProg":
+                                    Dispatcher.Invoke(() =>
+                                    {
+                                        FourthThreadProg += 1;
+                                    });
+                                    break;
+                                case "FifthThreadProg":
+                                    Dispatcher.Invoke(() =>
+                                    {
+                                        FifthThreadProg += 1;
+                                    });
+                                    break;
+                                case "SixthThreadProg":
+                                    Dispatcher.Invoke(() =>
+                                    {
+                                        SixthThreadProg += 1;
+                                    });
+                                    break;
+                            }
+                        }
+
+                        Thread.Sleep(10);
+                    }
                 }
 
                 return output.ToArray();
@@ -333,42 +446,78 @@ namespace ZipFile
 
         //--------------------------------------------------------------------
 
-        public static byte[] UnZipStr(string file, byte[] input)
+        public byte[] UnZipStr(byte[] input)
         {
-            using (MemoryStream inputStream = new MemoryStream(input))
-            //using (FileStream inputStream = new FileStream(file, FileMode.OpenOrCreate))
-            {
-                using (DeflateStream deflateZip = new DeflateStream(inputStream, CompressionMode.Decompress))
-                {
-                    var bytes = new byte[10000000];
-                    var len = 0;
-                    //deflateZip.CopyTo(inputStream);
-                    len = deflateZip.Read(bytes, 0, input.Length);
-                }
-
-                //return Encoding.ASCII.GetBytes(inputStream.ToString());
-                return inputStream.ToArray();
-            }
-        }
-
-        public static long Decompress(Stream inp, Stream outp)
-        {
-            byte[] buf = new byte[BUF_SIZE];
+            byte[] buf = new byte[256];
             long nBytes = 0;
 
-            // Decompress the contents of the input file
-            using (inp = new DeflateStream(inp, CompressionMode.Decompress))
+            using (MemoryStream outp = new MemoryStream())
             {
-                int len;
-                while ((len = inp.Read(buf, 0, buf.Length)) > 0)
+                using (MemoryStream stream = new MemoryStream(input))
                 {
-                    // Write the data block to the decompressed output stream
-                    outp.Write(buf, 0, len);
-                    nBytes += len;
+                    using (var inp = new DeflateStream(stream, CompressionMode.Decompress))
+                    {
+                        int len;
+                        while ((len = inp.Read(buf, 0, buf.Length)) > 0)
+                        {
+                            outp.Write(buf, 0, len);
+                            nBytes += len;
+                        }
+                    }
                 }
             }
-            // Done
-            return nBytes;
+
+            return Encoding.ASCII.GetBytes(nBytes.ToString());
+        }
+
+        //--------------------------------------------------------------------
+
+        void ThreeThreadProgress()
+        {
+            FirstThreadVis = Visibility.Visible;
+            SecondThreadVis = Visibility.Visible;
+            ThirdThreadVis = Visibility.Visible;
+
+            WinHeight = 240;
+        }
+
+        //--------------------------------------------------------------------
+
+        void FourThreadProgress()
+        {
+            FirstThreadVis = Visibility.Visible;
+            SecondThreadVis = Visibility.Visible;
+            ThirdThreadVis = Visibility.Visible;
+            FourthThreadVis = Visibility.Visible;
+
+            WinHeight = 270;
+        }
+
+        //--------------------------------------------------------------------
+
+        void FiveThreadProgress()
+        {
+            FirstThreadVis = Visibility.Visible;
+            SecondThreadVis = Visibility.Visible;
+            ThirdThreadVis = Visibility.Visible;
+            FourthThreadVis = Visibility.Visible;
+            FifthThreadVis = Visibility.Visible;
+
+            WinHeight = 300;
+        }
+
+        //--------------------------------------------------------------------
+
+        void SixThreadProgress()
+        {
+            FirstThreadVis = Visibility.Visible;
+            SecondThreadVis = Visibility.Visible;
+            ThirdThreadVis = Visibility.Visible;
+            FourthThreadVis = Visibility.Visible;
+            FifthThreadVis = Visibility.Visible;
+            SixthThreadVis = Visibility.Visible;
+
+            WinHeight = 330;
         }
 
         //--------------------------------------------------------------------
