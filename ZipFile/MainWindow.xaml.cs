@@ -38,7 +38,7 @@ namespace ZipFile
         private double winHeight = 160;
         public double WinHeight
         {
-            get => winHeight; 
+            get => winHeight;
             set
             {
                 winHeight = value;
@@ -49,7 +49,7 @@ namespace ZipFile
         private Visibility firstThreadVis = Visibility.Collapsed;
         public Visibility FirstThreadVis
         {
-            get => firstThreadVis; 
+            get => firstThreadVis;
             set
             {
                 firstThreadVis = value;
@@ -153,7 +153,7 @@ namespace ZipFile
 
         //--------------------------------------------------------------------
 
-        string fileText;
+        //string fileText;
 
         private ICommand startCom;
         public ICommand StartCom
@@ -165,88 +165,97 @@ namespace ZipFile
                     startCom = new RelayCommand(
                         (param) =>
                         {
+                            byte[] array = null;
                             using (FileStream fstream = File.OpenRead(FilePath))
                             {
-                                byte[] array = new byte[fstream.Length];
+                                array = new byte[fstream.Length];
 
                                 fstream.Read(array, 0, array.Length);
-
-                                fileText = Encoding.Default.GetString(array);
                             }
 
-                            //var zipResult = ZipStr(fileText);
-
-                            var UnZipResult = UnZipStr(Encoding.ASCII.GetBytes(fileText));
-
-
-                            using (FileStream fstream = new FileStream(FilePath, FileMode.OpenOrCreate))
+                            if (IsZip)
                             {
-                               // byte[] array = System.Text.Encoding.Default.GetBytes(fileText);
+                                var zipResult = ZipStr(array);
 
-                                fstream.Write(Encoding.ASCII.GetBytes(UnZipResult), 0, UnZipResult.Length);
+                                using (FileStream fstream = new FileStream(FilePath, FileMode.OpenOrCreate))
+                                {
+                                    fstream.Write(zipResult, 0, zipResult.Length);
+                                }
+
+
+                            }
+                            else
+                            {
+                                var UnZipResult = UnZipStr(FilePath, array);
+
+                                using (FileStream fstream = new FileStream(FilePath, FileMode.OpenOrCreate))
+                                {
+                                    fstream.Write(UnZipResult, 0, UnZipResult.Length);
+                                }
                             }
 
+                            MessageBox.Show("Done");
 
                             return;
 
-                            var fileLength = fileText.Length;
+                            //var fileLength = fileText.Length;
 
-                            if (fileLength < 1000)
-                            {
-                                FirstThreadVis = Visibility.Visible;
+                            //if (fileLength < 1000)
+                            //{
+                            //    FirstThreadVis = Visibility.Visible;
 
-                                WinHeight = 180;
-                            }
-                            else
-                            if (1000 <= fileLength && fileLength < 2000)
-                            {
-                                FirstThreadVis = Visibility.Visible;
-                                SecondThreadVis = Visibility.Visible;
+                            //    WinHeight = 180;
+                            //}
+                            //else
+                            //if (1000 <= fileLength && fileLength < 2000)
+                            //{
+                            //    FirstThreadVis = Visibility.Visible;
+                            //    SecondThreadVis = Visibility.Visible;
 
-                                WinHeight = 210;
-                            }
-                            else
-                            if (2000 <= fileLength && fileLength < 4000)
-                            {
-                                FirstThreadVis = Visibility.Visible;
-                                SecondThreadVis = Visibility.Visible;
-                                ThirdThreadVis = Visibility.Visible;
+                            //    WinHeight = 210;
+                            //}
+                            //else
+                            //if (2000 <= fileLength && fileLength < 4000)
+                            //{
+                            //    FirstThreadVis = Visibility.Visible;
+                            //    SecondThreadVis = Visibility.Visible;
+                            //    ThirdThreadVis = Visibility.Visible;
 
-                                WinHeight = 240;
-                            }
-                            else
-                            if (4000 <= fileLength && fileLength < 8000)
-                            {
-                                FirstThreadVis = Visibility.Visible;
-                                SecondThreadVis = Visibility.Visible;
-                                ThirdThreadVis = Visibility.Visible;
-                                FourthThreadVis = Visibility.Visible;
+                            //    WinHeight = 240;
+                            //}
+                            //else
+                            //if (4000 <= fileLength && fileLength < 8000)
+                            //{
+                            //    FirstThreadVis = Visibility.Visible;
+                            //    SecondThreadVis = Visibility.Visible;
+                            //    ThirdThreadVis = Visibility.Visible;
+                            //    FourthThreadVis = Visibility.Visible;
 
-                                WinHeight = 270;
-                            }
-                            else
-                            if (8000 <= fileLength && fileLength < 16000)
-                            {
-                                FirstThreadVis = Visibility.Visible;
-                                SecondThreadVis = Visibility.Visible;
-                                ThirdThreadVis = Visibility.Visible;
-                                FourthThreadVis = Visibility.Visible;
-                                FifthThreadVis = Visibility.Visible;
+                            //    WinHeight = 270;
+                            //}
+                            //else
+                            //if (8000 <= fileLength && fileLength < 16000)
+                            //{
+                            //    FirstThreadVis = Visibility.Visible;
+                            //    SecondThreadVis = Visibility.Visible;
+                            //    ThirdThreadVis = Visibility.Visible;
+                            //    FourthThreadVis = Visibility.Visible;
+                            //    FifthThreadVis = Visibility.Visible;
 
-                                WinHeight = 300;
-                            }
-                            else
-                            if (16000 <= fileLength)
-                            {
-                                FirstThreadVis = Visibility.Visible;
-                                SecondThreadVis = Visibility.Visible;
-                                ThirdThreadVis = Visibility.Visible;
-                                FourthThreadVis = Visibility.Visible;
-                                FifthThreadVis = Visibility.Visible;
-                                SixthThreadVis = Visibility.Visible;
+                            //    WinHeight = 300;
+                            //}
+                            //else
+                            //if (16000 <= fileLength)
+                            //{
+                            //    FirstThreadVis = Visibility.Visible;
+                            //    SecondThreadVis = Visibility.Visible;
+                            //    ThirdThreadVis = Visibility.Visible;
+                            //    FourthThreadVis = Visibility.Visible;
+                            //    FifthThreadVis = Visibility.Visible;
+                            //    SixthThreadVis = Visibility.Visible;
 
-                                WinHeight = 330;
-                            }
+                            //    WinHeight = 330;
+                            //}
 
                         },
                         (param) =>
@@ -309,75 +318,58 @@ namespace ZipFile
 
         //--------------------------------------------------------------------
 
-        public static byte[] ZipStr(String str)
+        public static byte[] ZipStr(byte[] str)
         {
             using (MemoryStream output = new MemoryStream())
             {
-                using (DeflateStream gzip = new DeflateStream(output, CompressionMode.Compress))
+                using (DeflateStream deflateZip = new DeflateStream(output, CompressionMode.Compress))
                 {
-                    using (StreamWriter writer = new StreamWriter(gzip, System.Text.Encoding.UTF8))
-                    {
-                        writer.Write(str);
-                    }
+                    deflateZip.Write(str, 0, str.Length);
                 }
 
                 return output.ToArray();
             }
         }
 
-        //public static void Compress(FileInfo fi)
-        //{
-        //    using (FileStream inFile = fi.OpenRead())
-        //    {
-        //        if ((File.GetAttributes(fi.FullName) & FileAttributes.Hidden) != FileAttributes.Hidden & fi.Extension != ".cmp")
-        //        {
-        //            using (FileStream outFile = File.Create(fi.FullName + ".cmp"))
-        //            {
-        //                using (DeflateStream Compress = new DeflateStream(outFile, CompressionMode.Compress))
-        //                {
-        //                    inFile.CopyTo(Compress);
-
-        //                    //Console.WriteLine("Compressed {0} from {1} to {2} bytes.", fi.Name, fi.Length.ToString(), outFile.Length.ToString());
-        //                }
-        //            }
-        //        }
-        //    }
-        //}
-
         //--------------------------------------------------------------------
 
-        public static string UnZipStr(byte[] input)
+        public static byte[] UnZipStr(string file, byte[] input)
         {
             using (MemoryStream inputStream = new MemoryStream(input))
+            //using (FileStream inputStream = new FileStream(file, FileMode.OpenOrCreate))
             {
-                using (DeflateStream gzip = new DeflateStream(inputStream, CompressionMode.Decompress))
+                using (DeflateStream deflateZip = new DeflateStream(inputStream, CompressionMode.Decompress))
                 {
-                    using (StreamReader reader = new StreamReader(gzip, System.Text.Encoding.UTF8))
-                    {
-                        return reader.ReadToEnd();
-                    }
+                    var bytes = new byte[10000000];
+                    var len = 0;
+                    //deflateZip.CopyTo(inputStream);
+                    len = deflateZip.Read(bytes, 0, input.Length);
                 }
+
+                //return Encoding.ASCII.GetBytes(inputStream.ToString());
+                return inputStream.ToArray();
             }
         }
 
-        //public static void Decompress(FileInfo fi)
-        //{
-        //    using (FileStream inFile = fi.OpenRead())
-        //    {
-        //        string curFile = fi.FullName;
-        //        string origName = curFile.Remove(curFile.Length - fi.Extension.Length);
+        public static long Decompress(Stream inp, Stream outp)
+        {
+            byte[] buf = new byte[BUF_SIZE];
+            long nBytes = 0;
 
-        //        using (FileStream outFile = File.Create(origName))
-        //        {
-        //            using (DeflateStream Decompress = new DeflateStream(inFile, CompressionMode.Decompress))
-        //            {
-        //                Decompress.CopyTo(outFile);
-
-        //                //Console.WriteLine("Decompressed: {0}", fi.Name);
-        //            }
-        //        }
-        //    }
-        //}
+            // Decompress the contents of the input file
+            using (inp = new DeflateStream(inp, CompressionMode.Decompress))
+            {
+                int len;
+                while ((len = inp.Read(buf, 0, buf.Length)) > 0)
+                {
+                    // Write the data block to the decompressed output stream
+                    outp.Write(buf, 0, len);
+                    nBytes += len;
+                }
+            }
+            // Done
+            return nBytes;
+        }
 
         //--------------------------------------------------------------------
 
