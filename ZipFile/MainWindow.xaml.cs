@@ -268,7 +268,7 @@ namespace ZipFile
 
                             if (IsZip)
                             {
-                                if (Arrlength <= 500000)
+                                if (Arrlength <= 100000)
                                 {
                                     FirstThreadVis = Visibility.Visible;
                                     FirstThreadMaxProg = Arrlength;
@@ -302,11 +302,15 @@ namespace ZipFile
                                         ArrS[j] = array[i];
                                     }
 
-                                    var task1 = Task.Run(() => resArray = ZipStr(ArrF, "FirstThreadProg"));
-                                    var task2 = Task.Run(() => resArray = ZipStr(ArrS, "SecondThreadProg"));
+                                    byte[] tempArr = new byte[Arrlength / 2];
 
-                                    task1.Wait();
-                                    task2.Wait();
+                                    Task.Run(() => resArray = ZipStr(ArrF, "FirstThreadProg"));
+                                    Task.Run(() => tempArr = ZipStr(ArrS, "SecondThreadProg"));
+
+                                    for (int i = 0, j = tempArr.Length; i < tempArr.Length; i++, j++)
+                                    {
+                                        resArray[j] = tempArr[i];
+                                    }
                                 }
                             }
                             else
@@ -393,7 +397,6 @@ namespace ZipFile
                         lock (zip)
                         {
                             deflateZip.WriteByte(str[i]);
-
 
                             switch (thread)
                             {
