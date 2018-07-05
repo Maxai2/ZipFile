@@ -1,7 +1,9 @@
 ﻿using Microsoft.Win32;
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
 using System.Runtime.CompilerServices;
@@ -198,6 +200,7 @@ namespace ZipFile
             set { sixthThreadMaxProg = value; OnPropertyChanged(); }
         }
 
+        public double chunkSize { get; set; }
 
         //--------------------------------------------------------------------
 
@@ -213,6 +216,8 @@ namespace ZipFile
             OpenFile.InitialDirectory = AppDomain.CurrentDomain.BaseDirectory;
 
             OpenFile.RestoreDirectory = true;
+
+            chunkSize = (Environment.ProcessorCount * 2000) + 256;
         }
 
         //--------------------------------------------------------------------
@@ -241,6 +246,7 @@ namespace ZipFile
         //--------------------------------------------------------------------
 
         //string fileText;
+        Queue<byte[]> chunksQueue = new Queue<byte[]>();
 
         private ICommand startCom;
         public ICommand StartCom
@@ -252,77 +258,29 @@ namespace ZipFile
                     startCom = new RelayCommand(
                         (param) =>
                         {
-                            byte[] array = null;
-
-                            using (FileStream fstream = File.OpenRead(FilePath))
+                            using (var fs = new FileStream(FilePath, FileMode.Open))
                             {
-                                array = new byte[fstream.Length];
-
-                                fstream.Read(array, 0, array.Length);
-                            }
-
-                            var Arrlength = array.Length;
-
-                            byte[] resArray = null;
-                            resArray = new byte[Arrlength];
-
-                            if (IsZip)
-                            {
-                                if (Arrlength <= 100000)
+                                var parts = (int)Math.Ceiling(fs.Length * 1.0 / chunkSize);
+                                var toRead = (int)Math.Min(fs.Length - fs.Position, chunkSize);
+                                while (toRead > 0)
                                 {
-                                    FirstThreadVis = Visibility.Visible;
-                                    FirstThreadMaxProg = Arrlength;
-
-                                    WinHeight = 180;
-
-                                    Task.Run(() => resArray = ZipStr(array, "FirstThreadProg"));
-                                }
-                                else
-                                {
-                                    FirstThreadVis = Visibility.Visible;
-                                    SecondThreadVis = Visibility.Visible;
-
-                                    Dispatcher.Invoke(() =>
-                                    {
-                                        SecondThreadMaxProg = FirstThreadMaxProg = Arrlength / 2;
-                                    });
-
-                                    WinHeight = 210;
-
-                                    byte[] ArrF = new byte[Arrlength / 2];
-                                    byte[] ArrS = new byte[Arrlength / 2];
-
-                                    for (int i = 0; i < Arrlength / 2; i++)
-                                    {
-                                        ArrF[i] = array[i];
-                                    }
-
-                                    for (int i = Arrlength / 2, j = 0; i < Arrlength - 1; i++, j++)
-                                    {
-                                        ArrS[j] = array[i];
-                                    }
-
-                                    byte[] tempArr = new byte[Arrlength / 2];
-
-                                    Task.Run(() => resArray = ZipStr(ArrF, "FirstThreadProg"));
-                                    Task.Run(() => tempArr = ZipStr(ArrS, "SecondThreadProg"));
-
-                                    for (int i = 0, j = tempArr.Length; i < tempArr.Length; i++, j++)
-                                    {
-                                        resArray[j] = tempArr[i];
-                                    }
+                                    var chunk = new byte[toRead];
+                                    fs.Read(chunk, 0, toRead);
+                                    chunksQueue.Enqueue(chunk);
+                                    toRead = (int)Math.Min(fs.Length - fs.Position, toRead);
                                 }
                             }
-                            else
-                                resArray = UnZipStr(array);
 
-                            using (FileStream fstream = new FileStream(FilePath, FileMode.OpenOrCreate))
+                            using (var fs = new FileStream("unzipped_" + FilePath, FileMode.Create))
                             {
-                                fstream.Write(resArray, 0, resArray.Length);
+                                while (chunksQueue.Count > 0)
+                                {
+                                    var chunk = chunksQueue.Dequeue();
+                                    fs.Write(chunk, 0, chunk.Length);
+                                }
                             }
 
-                            MessageBox.Show("Done");
-
+                            Process.Start("explorer", FilePath.Substring(0, FilePath.LastIndexOf('\\')).ToString());
                         },
                         (param) =>
                         {
@@ -384,93 +342,46 @@ namespace ZipFile
 
         //--------------------------------------------------------------------
 
-        static object zip = new object();
-
-        public byte[] ZipStr(byte[] str, string thread)
+        public void ZipStr(byte[] str, string thread)
         {
-            using (MemoryStream output = new MemoryStream())
+            using (var fs = new FileStream(FilePath + ".zip", FileMode.Create))
             {
-                using (DeflateStream deflateZip = new DeflateStream(output, CompressionMode.Compress))
+                using (var ds = new DeflateStream(fs, CompressionLevel.Optimal))
                 {
-                    for (int i = 0; i < str.Length; i++)
+                    using (var bw = new BinaryWriter(ds))
                     {
-                        lock (zip)
+                        bw.Write(chunksQueue.Count);
+                        while (chunksQueue.Count > 0)
                         {
-                            deflateZip.WriteByte(str[i]);
-
-                            switch (thread)
-                            {
-                                case "FirstThreadProg":
-                                    Dispatcher.Invoke(() =>
-                                    {
-                                        FirstThreadProg += 1;
-                                    });
-                                    break;
-                                case "SecondThreadProg":
-                                    Dispatcher.Invoke(() =>
-                                    {
-                                        SecondThreadProg += 1;
-                                    });
-                                    break;
-                                case "ThirdThreadProg":
-                                    Dispatcher.Invoke(() =>
-                                    {
-                                        ThirdThreadProg += 1;
-                                    });
-                                    break;
-                                case "FourthThreadProg":
-                                    Dispatcher.Invoke(() =>
-                                    {
-                                        FourthThreadProg += 1;
-                                    });
-                                    break;
-                                case "FifthThreadProg":
-                                    Dispatcher.Invoke(() =>
-                                    {
-                                        FifthThreadProg += 1;
-                                    });
-                                    break;
-                                case "SixthThreadProg":
-                                    Dispatcher.Invoke(() =>
-                                    {
-                                        SixthThreadProg += 1;
-                                    });
-                                    break;
-                            }
+                            var chunk = chunksQueue.Dequeue();
+                            bw.Write(chunk.Length);
+                            bw.Write(chunk);
                         }
-
-                        Thread.Sleep(10);
                     }
                 }
-
-                return output.ToArray();
             }
         }
 
         //--------------------------------------------------------------------
 
-        public byte[] UnZipStr(byte[] input)
+        public void UnZipStr(byte[] input)
         {
-            byte[] buf = new byte[256];
-            long nBytes = 0;
-
-            using (MemoryStream outp = new MemoryStream())
+            using (var fs = new FileStream(FilePath + ".zip", FileMode.Open))
             {
-                using (MemoryStream stream = new MemoryStream(input))
+                using (var ds = new DeflateStream(fs, CompressionMode.Decompress))
                 {
-                    using (var inp = new DeflateStream(stream, CompressionMode.Decompress))
+                    using (var br = new BinaryReader(ds))
                     {
-                        int len;
-                        while ((len = inp.Read(buf, 0, buf.Length)) > 0)
+                        var count = br.ReadInt32();
+                        for (var i = 0; i < count; ++i)
                         {
-                            outp.Write(buf, 0, len);
-                            nBytes += len;
+                            var len = br.ReadInt32();
+                            var chunk = br.ReadBytes(len);
+                            chunksQueue.Enqueue(chunk);
                         }
                     }
                 }
             }
-
-            return Encoding.ASCII.GetBytes(nBytes.ToString());
         }
 
         //--------------------------------------------------------------------
