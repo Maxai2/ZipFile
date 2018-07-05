@@ -246,7 +246,9 @@ namespace ZipFile
         //--------------------------------------------------------------------
 
         //string fileText;
-        Queue<byte[]> chunksQueue = new Queue<byte[]>();
+
+        List<byte[]> chunksList = new List<byte[]>();
+        int parts = 6;
 
         private ICommand startCom;
         public ICommand StartCom
@@ -260,27 +262,21 @@ namespace ZipFile
                         {
                             using (var fs = new FileStream(FilePath, FileMode.Open))
                             {
-                                var parts = (int)Math.Ceiling(fs.Length * 1.0 / chunkSize);
+                                var chunkSize = (int)Math.Ceiling(fs.Length * 1.0 / parts);
                                 var toRead = (int)Math.Min(fs.Length - fs.Position, chunkSize);
                                 while (toRead > 0)
                                 {
+                                    Console.WriteLine(fs.Length - fs.Position + " " + toRead);
                                     var chunk = new byte[toRead];
                                     fs.Read(chunk, 0, toRead);
-                                    chunksQueue.Enqueue(chunk);
+                                    chunksList.Add(chunk);
                                     toRead = (int)Math.Min(fs.Length - fs.Position, toRead);
                                 }
                             }
 
-                            using (var fs = new FileStream("unzipped_" + FilePath, FileMode.Create))
-                            {
-                                while (chunksQueue.Count > 0)
-                                {
-                                    var chunk = chunksQueue.Dequeue();
-                                    fs.Write(chunk, 0, chunk.Length);
-                                }
-                            }
+                            Zip();
 
-                            Process.Start("explorer", FilePath.Substring(0, FilePath.LastIndexOf('\\')).ToString());
+                            Process.Start("explorer", FilePath.Substring(0, FilePath.LastIndexOf('\\')));
                         },
                         (param) =>
                         {
@@ -342,46 +338,64 @@ namespace ZipFile
 
         //--------------------------------------------------------------------
 
-        public void ZipStr(byte[] str, string thread)
+        int count = 0;
+
+        public void Zip()
         {
-            using (var fs = new FileStream(FilePath + ".zip", FileMode.Create))
+            Parallel.For(0, chunksList.Count, new ParallelOptions
             {
-                using (var ds = new DeflateStream(fs, CompressionLevel.Optimal))
+                MaxDegreeOfParallelism = parts
+            }, (i) =>
+            {
+                FirstThreadVis = Visibility.Visible;
+                WinHeight = 180;
+
+                using (var wms = new MemoryStream())
                 {
-                    using (var bw = new BinaryWriter(ds))
+                    Task.Run(() =>
                     {
-                        bw.Write(chunksQueue.Count);
-                        while (chunksQueue.Count > 0)
+                        FirstThreadMaxProg = chunksList[i].Length;
+
+                        using (var ds = new DeflateStream(wms, CompressionMode.Compress))
                         {
-                            var chunk = chunksQueue.Dequeue();
-                            bw.Write(chunk.Length);
-                            bw.Write(chunk);
+                            while (count <= chunksList[i].Length)
+                            {
+                                ds.Write(chunksList[i], 0, count);
+                                count += 10;
+
+                                Dispatcher.Invoke(() =>
+                                {
+                                    FirstThreadProg++;
+                                });
+                            }
                         }
-                    }
+
+                        chunksList[i] = wms.ToArray();
+                    });
                 }
-            }
+            });
         }
 
         //--------------------------------------------------------------------
 
-        public void UnZipStr(byte[] input)
+        public void UnZip()
         {
-            using (var fs = new FileStream(FilePath + ".zip", FileMode.Open))
-            {
-                using (var ds = new DeflateStream(fs, CompressionMode.Decompress))
-                {
-                    using (var br = new BinaryReader(ds))
-                    {
-                        var count = br.ReadInt32();
-                        for (var i = 0; i < count; ++i)
-                        {
-                            var len = br.ReadInt32();
-                            var chunk = br.ReadBytes(len);
-                            chunksQueue.Enqueue(chunk);
-                        }
-                    }
-                }
-            }
+            //using (var fs = new FileStream(FilePath + ".zip", FileMode.Open))
+            //{
+            //    using (var ds = new DeflateStream(fs, CompressionMode.Decompress))
+            //    {
+            //        using (var br = new BinaryReader(ds))
+            //        {
+            //            var count = br.ReadInt32();
+            //            for (var i = 0; i < count; ++i)
+            //            {
+            //                var len = br.ReadInt32();
+            //                var chunk = br.ReadBytes(len);
+            //                chunksQueue.Enqueue(chunk);
+            //            }
+            //        }
+            //    }
+            //}
         }
 
         //--------------------------------------------------------------------
@@ -446,3 +460,85 @@ namespace ZipFile
         //--------------------------------------------------------------------
     }
 }
+
+
+
+/*            var filename = "img.bmp";
+            var chunksList = new List<byte[]>();
+            var parts = 5;
+
+            using (var fs = new FileStream(filename, FileMode.Open)) {
+                var chunkSize = (int)Math.Ceiling(fs.Length * 1.0 / parts);
+                var toRead = (int)Math.Min(fs.Length - fs.Position, chunkSize);
+                while (toRead > 0) {
+                    Console.WriteLine(fs.Length - fs.Position + " " + toRead);
+                    var chunk = new byte[toRead];
+                    fs.Read(chunk, 0, toRead);
+                    chunksList.Add(chunk);
+                    toRead = (int)Math.Min(fs.Length - fs.Position, toRead);
+                }
+            }
+
+            Parallel.For(0, chunksList.Count, new ParallelOptions {
+                MaxDegreeOfParallelism = parts
+            }, (i) => {
+                var wms = new MemoryStream();
+                using (var ds = new DeflateStream(wms, CompressionMode.Compress)) {
+                    ds.Write(chunksList[i], 0, chunksList[i].Length);
+                }
+                chunksList[i] = wms.ToArray();
+            });
+
+            using (var fs = new FileStream(filename + ".zippo", FileMode.Create)) {
+                using (var bw = new BinaryWriter(fs)) {
+                    bw.Write(chunksList.Count);
+                    foreach (var item in chunksList) {
+                        bw.Write(item.Length);
+                        bw.Write(item);
+                    }
+                }
+            }*/
+
+/*var filename = "img.bmp";
+        var chunkSize = 8192;
+        var chunksQueue = new Queue<byte[]>();
+        using (var fs = new FileStream(filename, FileMode.Open)) {
+            var parts = (int)Math.Ceiling(fs.Length * 1.0 / chunkSize);
+            var toRead = (int)Math.Min(fs.Length - fs.Position, chunkSize);
+            while (toRead > 0) {
+                var chunk = new byte[toRead];
+                fs.Read(chunk, 0, toRead);
+                chunksQueue.Enqueue(chunk);
+                toRead = (int)Math.Min(fs.Length - fs.Position, toRead);
+            }
+        }
+        using (var fs = new FileStream(filename + ".zip", FileMode.Create)) {
+            using (var ds = new DeflateStream(fs, CompressionLevel.Optimal)) {
+                using (var bw = new BinaryWriter(ds)) {
+                    bw.Write(chunksQueue.Count);
+                    while (chunksQueue.Count > 0) {
+                        var chunk = chunksQueue.Dequeue();
+                        bw.Write(chunk.Length);
+                        bw.Write(chunk);
+                    }
+                }
+            }
+        }
+        using (var fs = new FileStream(filename + ".zip", FileMode.Open)) {
+            using (var ds = new DeflateStream(fs, CompressionMode.Decompress)) {
+                using (var br = new BinaryReader(ds)) {
+                    var count = br.ReadInt32();
+                    for (var i = 0; i < count; ++i) {
+                        var len = br.ReadInt32();
+                        var chunk = br.ReadBytes(len);
+                        chunksQueue.Enqueue(chunk);
+                    }
+                }
+            }
+        }
+        using (var fs = new FileStream("unzipped_" + filename, FileMode.Create)) {                
+            while (chunksQueue.Count > 0) {
+                var chunk = chunksQueue.Dequeue();
+                fs.Write(chunk, 0, chunk.Length);
+            }
+        }*/
