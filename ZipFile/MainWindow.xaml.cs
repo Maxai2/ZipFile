@@ -276,7 +276,8 @@ namespace ZipFile
 
                             Zip();
 
-                            Process.Start("explorer", FilePath.Substring(0, FilePath.LastIndexOf('\\')));
+
+                            //Process.Start("explorer", FilePath.Substring(0, FilePath.LastIndexOf('\\')));
                         },
                         (param) =>
                         {
@@ -367,6 +368,8 @@ namespace ZipFile
                                 {
                                     FirstThreadProg++;
                                 });
+
+                                Thread.Sleep(10);
                             }
                         }
 
