@@ -349,27 +349,21 @@ namespace ZipFile
 
             Parallel.For(0, chunksList.Count, new ParallelOptions
             {
-                MaxDegreeOfParallelism = 1
+                MaxDegreeOfParallelism = 5
             }, (i) =>
             {
                 using (var wms = new MemoryStream())
                 {
-                    FirstThreadMaxProg = chunksList[i].Length;
+                    //FirstThreadMaxProg = chunksList[i].Length;
 
                     using (var ds = new DeflateStream(wms, CompressionMode.Compress))
                     {
-                        while (count <= chunksList[i].Length)
+                        ds.Write(chunksList[i], 0, chunksList[i].Length);
+
+                        Dispatcher.Invoke(() =>
                         {
-                            ds.Write(chunksList[i], 0, count);
-                            count += 10;
-
-                            Dispatcher.Invoke(() =>
-                            {
-                                FirstThreadProg += 10;
-                            });
-
-                            Thread.Sleep(10);
-                        }
+                            FirstThreadProg += 10;
+                        });
                     }
 
                     chunksList[i] = wms.ToArray();
