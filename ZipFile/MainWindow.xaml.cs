@@ -218,6 +218,8 @@ namespace ZipFile
             OpenFile.RestoreDirectory = true;
 
             chunkSize = (Environment.ProcessorCount * 2000) + 256;
+
+            parts = Environment.ProcessorCount;
         }
 
         //--------------------------------------------------------------------
@@ -248,7 +250,7 @@ namespace ZipFile
         //string fileText;
 
         List<byte[]> chunksList = new List<byte[]>();
-        int parts = 6;
+        int parts;
 
         private ICommand startCom;
         public ICommand StartCom
@@ -275,7 +277,6 @@ namespace ZipFile
                             }
 
                             Zip();
-
 
                             //Process.Start("explorer", FilePath.Substring(0, FilePath.LastIndexOf('\\')));
                         },
@@ -343,38 +344,35 @@ namespace ZipFile
 
         public void Zip()
         {
+            FirstThreadVis = Visibility.Visible;
+            WinHeight = 180;
+
             Parallel.For(0, chunksList.Count, new ParallelOptions
             {
-                MaxDegreeOfParallelism = parts
+                MaxDegreeOfParallelism = 1
             }, (i) =>
             {
-                FirstThreadVis = Visibility.Visible;
-                WinHeight = 180;
-
                 using (var wms = new MemoryStream())
                 {
-                    Task.Run(() =>
+                    FirstThreadMaxProg = chunksList[i].Length;
+
+                    using (var ds = new DeflateStream(wms, CompressionMode.Compress))
                     {
-                        FirstThreadMaxProg = chunksList[i].Length;
-
-                        using (var ds = new DeflateStream(wms, CompressionMode.Compress))
+                        while (count <= chunksList[i].Length)
                         {
-                            while (count <= chunksList[i].Length)
+                            ds.Write(chunksList[i], 0, count);
+                            count += 10;
+
+                            Dispatcher.Invoke(() =>
                             {
-                                ds.Write(chunksList[i], 0, count);
-                                count += 10;
+                                FirstThreadProg += 10;
+                            });
 
-                                Dispatcher.Invoke(() =>
-                                {
-                                    FirstThreadProg++;
-                                });
-
-                                Thread.Sleep(10);
-                            }
+                            Thread.Sleep(10);
                         }
+                    }
 
-                        chunksList[i] = wms.ToArray();
-                    });
+                    chunksList[i] = wms.ToArray();
                 }
             });
         }
