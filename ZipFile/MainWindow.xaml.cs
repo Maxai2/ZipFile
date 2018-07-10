@@ -560,3 +560,37 @@ namespace ZipFile
                 fs.Write(chunk, 0, chunk.Length);
             }
         }*/
+
+
+/*            var socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+        var ep = new IPEndPoint(IPAddress.Parse("10.2.14.3"), 7534);
+
+        socket.Bind(ep);
+        socket.Listen(10);
+
+        Console.WriteLine("Listening in " + ep.Address + ":" + ep.Port);
+
+        var bytes = new byte[8192];
+
+        var client = socket.Accept();
+
+        while (true)
+        {
+            var length = client.Receive(bytes);
+
+            var msg = Encoding.Default.GetString(bytes, 0, length);
+            Console.WriteLine($"{client.RemoteEndPoint}: {msg}");
+        }*/
+
+
+/*            var socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+        var ep = new IPEndPoint(IPAddress.Parse("10.2.14.3"), 7534);
+
+        socket.Connect(ep);
+
+        while (true)
+        {
+            var msg = Console.ReadLine(); ;
+            var data = Encoding.Default.GetBytes(msg);
+            socket.Send(data);
+        }*/
