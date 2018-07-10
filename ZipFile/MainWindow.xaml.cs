@@ -268,7 +268,7 @@ namespace ZipFile
                                 var toRead = (int)Math.Min(fs.Length - fs.Position, chunkSize);
                                 while (toRead > 0)
                                 {
-                                    Console.WriteLine(fs.Length - fs.Position + " " + toRead);
+                                    //  Console.WriteLine(fs.Length - fs.Position + " " + toRead);
                                     var chunk = new byte[toRead];
                                     fs.Read(chunk, 0, toRead);
                                     chunksList.Add(chunk);
@@ -340,34 +340,59 @@ namespace ZipFile
 
         //--------------------------------------------------------------------
 
-        int count = 0;
-
+        private object sync = new object();
         public void Zip()
         {
             FirstThreadVis = Visibility.Visible;
             WinHeight = 180;
 
-            Parallel.For(0, chunksList.Count, new ParallelOptions
+            FirstThreadMaxProg = chunksList.Count;
+            FirstThreadProg = 0;
+            ThreadPool.SetMinThreads(10, 10);
+            Task.Run(() =>
             {
-                MaxDegreeOfParallelism = 5
-            }, (i) =>
-            {
-                using (var wms = new MemoryStream())
+                Parallel.For(0, chunksList.Count, new ParallelOptions
                 {
-                    //FirstThreadMaxProg = chunksList[i].Length;
-
-                    using (var ds = new DeflateStream(wms, CompressionMode.Compress))
+                    MaxDegreeOfParallelism = chunksList.Count
+                }, (i) =>
+                {
+                    Console.WriteLine(Thread.CurrentThread.ManagedThreadId);
+                    using (var wms = new MemoryStream())
                     {
-                        ds.Write(chunksList[i], 0, chunksList[i].Length);
-
-                        Dispatcher.Invoke(() =>
+                        using (var ds = new DeflateStream(wms, CompressionMode.Compress))
                         {
-                            FirstThreadProg += 10;
-                        });
-                    }
+                            int count = 0;
+                            var length = chunksList[i].Length;
+                            Console.WriteLine(Thread.CurrentThread.ManagedThreadId + "|  " + i + "| " + count + " " + length);
 
-                    chunksList[i] = wms.ToArray();
-                }
+
+                            // Console.WriteLine(Thread.CurrentThread.ManagedThreadId + "|  " + i + "| " + count + " " + length);
+                            //   Console.ReadLine();
+                            while (count < length)
+                            {
+                                ds.WriteByte(chunksList[i][count]);
+
+                                count++;
+
+                                // if (count % 10000 == 0)
+                                // {
+                                // Console.WriteLine(Thread.CurrentThread.ManagedThreadId + "  " + count + " " + i);
+
+                                //}
+
+                                Dispatcher.Invoke(() =>
+                                {
+                                    FirstThreadProg += 1;
+                                });
+
+                                Thread.Sleep(5);
+                            }
+
+                        }
+
+                        chunksList[i] = wms.ToArray();
+                    }
+                });
             });
         }
 
@@ -455,8 +480,6 @@ namespace ZipFile
         //--------------------------------------------------------------------
     }
 }
-
-
 
 /*            var filename = "img.bmp";
             var chunksList = new List<byte[]>();

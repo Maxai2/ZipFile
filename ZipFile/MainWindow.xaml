@@ -38,12 +38,12 @@
 
 		<StackPanel Grid.Row="3">
 
-			<ProgressBar Height="20" Visibility="{Binding FirstThreadVis, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Value="{Binding FirstThreadProg, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Margin="0 5" Maximum="{Binding FirstThreadMaxProg, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
-			<ProgressBar Height="20" Visibility="{Binding SecondThreadVis, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Value="{Binding SecondThreadProg, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Margin="0 5" Maximum="{Binding SecondThreadMaxProg, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+			<ProgressBar Height="20" Visibility="{Binding FirstThreadVis}" Value="{Binding FirstThreadProg}" Margin="0 5" Maximum="{Binding FirstThreadMaxProg}"/>
+			<!--<ProgressBar Height="20" Visibility="{Binding SecondThreadVis, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Value="{Binding SecondThreadProg, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Margin="0 5" Maximum="{Binding SecondThreadMaxProg, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
 			<ProgressBar Height="20" Visibility="{Binding ThirdThreadVis, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Value="{Binding ThirdThreadProg, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Margin="0 5" Maximum="{Binding ThirdThreadMaxProg, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
 			<ProgressBar Height="20" Visibility="{Binding FourthThreadVis, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Value="{Binding FourthThreadProg, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Margin="0 5" Maximum="{Binding FourthThreadMaxProg, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
 			<ProgressBar Height="20" Visibility="{Binding FifthThreadVis, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Value="{Binding FifthThreadProg, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Margin="0 5" Maximum="{Binding FifthThreadMaxProg, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
-			<ProgressBar Height="20" Visibility="{Binding SixthThreadVis, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Value="{Binding SixthThreadProg, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Margin="0 5" Maximum="{Binding SixthThreadMaxProg, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+			<ProgressBar Height="20" Visibility="{Binding SixthThreadVis, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Value="{Binding SixthThreadProg, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Margin="0 5" Maximum="{Binding SixthThreadMaxProg, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>-->
 
 		</StackPanel>
 
