@@ -340,7 +340,7 @@ namespace ZipFile
 
         //--------------------------------------------------------------------
 
-        private object sync = new object();
+        //private object sync = new object();
         public void Zip()
         {
             FirstThreadVis = Visibility.Visible;
@@ -348,7 +348,7 @@ namespace ZipFile
 
             FirstThreadMaxProg = chunksList.Count;
             FirstThreadProg = 0;
-            ThreadPool.SetMinThreads(10, 10);
+            //ThreadPool.SetMinThreads(10, 10);
             Task.Run(() =>
             {
                 Parallel.For(0, chunksList.Count, new ParallelOptions
@@ -356,14 +356,15 @@ namespace ZipFile
                     MaxDegreeOfParallelism = chunksList.Count
                 }, (i) =>
                 {
-                    Console.WriteLine(Thread.CurrentThread.ManagedThreadId);
+                    //Console.WriteLine(Thread.CurrentThread.ManagedThreadId);
+
                     using (var wms = new MemoryStream())
                     {
                         using (var ds = new DeflateStream(wms, CompressionMode.Compress))
                         {
                             int count = 0;
                             var length = chunksList[i].Length;
-                            Console.WriteLine(Thread.CurrentThread.ManagedThreadId + "|  " + i + "| " + count + " " + length);
+                            //Console.WriteLine(Thread.CurrentThread.ManagedThreadId + "|  " + i + "| " + count + " " + length);
 
 
                             // Console.WriteLine(Thread.CurrentThread.ManagedThreadId + "|  " + i + "| " + count + " " + length);
@@ -385,9 +386,7 @@ namespace ZipFile
                                     FirstThreadProg += 1;
                                 });
 
-                                Thread.Sleep(5);
                             }
-
                         }
 
                         chunksList[i] = wms.ToArray();
