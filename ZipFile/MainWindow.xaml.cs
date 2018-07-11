@@ -340,7 +340,8 @@ namespace ZipFile
 
         //--------------------------------------------------------------------
 
-        //private object sync = new object();
+        private object sync = new object();
+
         public void Zip()
         {
             FirstThreadVis = Visibility.Visible;
@@ -375,16 +376,17 @@ namespace ZipFile
 
                                 count++;
 
-                                // if (count % 10000 == 0)
-                                // {
-                                // Console.WriteLine(Thread.CurrentThread.ManagedThreadId + "  " + count + " " + i);
-
-                                //}
-
-                                Dispatcher.Invoke(() =>
+                                if (count % 1000000 == 0)
                                 {
-                                    FirstThreadProg += 1;
-                                });
+                                    lock (sync)
+                                    {
+                                        Dispatcher.Invoke(() =>
+                                        {
+                                            Thread.Sleep(10);
+                                            FirstThreadProg += 1;
+                                        });
+                                    }
+                                }
 
                             }
                         }
@@ -579,6 +581,7 @@ namespace ZipFile
 
             var msg = Encoding.Default.GetString(bytes, 0, length);
             Console.WriteLine($"{client.RemoteEndPoint}: {msg}");
+            client.Send(Encoding.Default.GetByte("asdf"));
         }*/
 
 
@@ -586,10 +589,47 @@ namespace ZipFile
         var ep = new IPEndPoint(IPAddress.Parse("10.2.14.3"), 7534);
 
         socket.Connect(ep);
+        var answer = new byte[8192];
 
         while (true)
         {
             var msg = Console.ReadLine(); ;
             var data = Encoding.Default.GetBytes(msg);
             socket.Send(data);
+            var length = socket.Receive(answer);
+            cw("server: " + Encoding.Default.Getstring(answer, 0, length))
         }*/
+
+
+
+/* var socket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
+    var ep = new IPEndPoint(IPAddress.Parse("10.2.14.3"), 7534);
+
+    var answer = new byte[8192];
+
+    while (true)
+    {
+        var msg = Console.ReadLine(); ;
+        var data = Encoding.Default.GetBytes(msg);
+        socket.SendTo(data, ep);
+        }
+        */
+
+
+/*
+ var socket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp); // 65Kb
+    var ep = new IPEndPoint(IPAddress.Parse("10.2.14.3"), 7534);
+
+    socket.Bind(ep);
+
+    var bytes = new byte[socket.ReceiveBufferSize];
+    EndPoint client = new IPEndPoint(IPAddress.Any, 0);
+
+    while (true)
+    {
+        var length = socket.receiveFrom(bytes, ref client);
+
+        var msg = Encoding.Default.GetString(bytes, 0, length);
+        Console.WriteLine($"{client.RemoteEndPoint}: {msg}");
+
+ */
