@@ -11,12 +11,24 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Input;
 
 namespace ZipFile
 {
     public partial class MainWindow : Window, INotifyPropertyChanged
     {
+        private ObservableCollection<ProgressBarItem> progressBars;
+        public ObservableCollection<ProgressBarItem> ProgressBars
+        {
+            get => progressBars;
+            set
+            {
+                progressBars = value;
+                OnPropertyChanged();
+            }
+        }
+        
         private bool isZip = true;
         public bool IsZip
         {
@@ -105,17 +117,6 @@ namespace ZipFile
             }
         }
 
-        private Visibility sixthThreadVis = Visibility.Collapsed;
-        public Visibility SixthThreadVis
-        {
-            get => sixthThreadVis;
-            set
-            {
-                sixthThreadVis = value;
-                OnPropertyChanged();
-            }
-        }
-
         private double firstThreadProg;
         public double FirstThreadProg
         {
@@ -149,13 +150,6 @@ namespace ZipFile
         {
             get { return fifthThreadProg; }
             set { fifthThreadProg = value; OnPropertyChanged(); }
-        }
-
-        private double sixthThreadProg;
-        public double SixthThreadProg
-        {
-            get { return sixthThreadProg; }
-            set { sixthThreadProg = value; OnPropertyChanged(); }
         }
 
         private double firstThreadMaxProg;
@@ -193,13 +187,6 @@ namespace ZipFile
             set { fifthThreadMaxProg = value; OnPropertyChanged(); }
         }
 
-        private double sixthThreadMaxProg;
-        public double SixthThreadMaxProg
-        {
-            get { return sixthThreadMaxProg; }
-            set { sixthThreadMaxProg = value; OnPropertyChanged(); }
-        }
-
         public double chunkSize { get; set; }
 
         //--------------------------------------------------------------------
@@ -211,6 +198,7 @@ namespace ZipFile
             InitializeComponent();
 
             this.DataContext = this;
+            ProgressBars = new ObservableCollection<ProgressBarItem>();
 
             OpenFile = new OpenFileDialog();
             OpenFile.InitialDirectory = AppDomain.CurrentDomain.BaseDirectory;
@@ -319,7 +307,6 @@ namespace ZipFile
                                 ThirdThreadVis = Visibility.Visible;
                                 FourthThreadVis = Visibility.Visible;
                                 FifthThreadVis = Visibility.Visible;
-                                SixthThreadVis = Visibility.Visible;
 
                                 WinHeight = 330;
                             }
@@ -330,7 +317,6 @@ namespace ZipFile
                                 ThirdThreadVis = Visibility.Collapsed;
                                 FourthThreadVis = Visibility.Collapsed;
                                 FifthThreadVis = Visibility.Collapsed;
-                                SixthThreadVis = Visibility.Collapsed;
 
                                 WinHeight = 160;
                             }
@@ -351,27 +337,38 @@ namespace ZipFile
         {
             var parts = chunksList.Count;
 
-            FirstThreadVis = Visibility.Visible;
-            SecondThreadVis = Visibility.Visible;
-            ThirdThreadVis = Visibility.Visible;
-            FourthThreadVis = Visibility.Visible;
-            FifthThreadVis = Visibility.Visible;
+            for (int i = 0; i < parts; i++)
+            {
+                ProgressBarItem item = new ProgressBarItem
+                {
+                    BarValue = 20,
+                    BarMaxValue = 100
+                };
+
+                ProgressBars.Add(item);
+            }
+
+            //FirstThreadVis = Visibility.Visible;
+            //SecondThreadVis = Visibility.Visible;
+            //ThirdThreadVis = Visibility.Visible;
+            //FourthThreadVis = Visibility.Visible;
+            //FifthThreadVis = Visibility.Visible;
 
             WinHeight = 300;
 
             //FirstThreadMaxProg = tempLengthFs;
 
-            Dispatcher.Invoke(() => FirstThreadProg = 0);
-            Dispatcher.Invoke(() => SecondThreadProg = 0);
-            Dispatcher.Invoke(() => ThirdThreadProg = 0);
-            Dispatcher.Invoke(() => FourthThreadProg = 0);
-            Dispatcher.Invoke(() => FifthThreadProg = 0);
+            //Dispatcher.Invoke(() => FirstThreadProg = 0);
+            //Dispatcher.Invoke(() => SecondThreadProg = 0);
+            //Dispatcher.Invoke(() => ThirdThreadProg = 0);
+            //Dispatcher.Invoke(() => FourthThreadProg = 0);
+            //Dispatcher.Invoke(() => FifthThreadProg = 0);
 
             Task.Run(() =>
             {
                 Parallel.For(0, parts, new ParallelOptions
                 {
-                    MaxDegreeOfParallelism = parts
+                    MaxDegreeOfParallelism = 5
                 }, (i) =>
                 {
                     using (var wms = new MemoryStream())
@@ -381,24 +378,24 @@ namespace ZipFile
                             int count = 0;
                             var length = chunksList[i].Length;
 
-                            switch (i)
-                            {
-                                case 0:
-                                    FirstThreadMaxProg = chunksList[i].Length;
-                                    break;
-                                case 1:
-                                    SecondThreadMaxProg = chunksList[i].Length;
-                                    break;
-                                case 2:
-                                    ThirdThreadMaxProg = chunksList[i].Length;
-                                    break;
-                                case 3:
-                                    FourthThreadMaxProg = chunksList[i].Length;
-                                    break;
-                                case 4:
-                                    FifthThreadMaxProg = chunksList[i].Length;
-                                    break;
-                            }
+                            //switch (i)
+                            //{
+                            //    case 0:
+                            //        FirstThreadMaxProg = chunksList[i].Length;
+                            //        break;
+                            //    case 1:
+                            //        SecondThreadMaxProg = chunksList[i].Length;
+                            //        break;
+                            //    case 2:
+                            //        ThirdThreadMaxProg = chunksList[i].Length;
+                            //        break;
+                            //    case 3:
+                            //        FourthThreadMaxProg = chunksList[i].Length;
+                            //        break;
+                            //    case 4:
+                            //        FifthThreadMaxProg = chunksList[i].Length;
+                            //        break;
+                            //}
 
                             while (count < length)
                             {
@@ -409,24 +406,26 @@ namespace ZipFile
                                 {
                                     lock (sync)
                                     {
-                                        switch (i)
-                                        {
-                                            case 0:
-                                                Dispatcher.Invoke(() => FirstThreadProg += 100);
-                                                break;
-                                            case 1:
-                                                Dispatcher.Invoke(() => SecondThreadProg += 100);
-                                                break;
-                                            case 2:
-                                                Dispatcher.Invoke(() => ThirdThreadProg += 100);
-                                                break;
-                                            case 3:
-                                                Dispatcher.Invoke(() => FourthThreadProg += 100);
-                                                break;
-                                            case 4:
-                                                Dispatcher.Invoke(() => FifthThreadProg += 100);
-                                                break;
-                                        }
+                                        Thread.Sleep(10);
+
+                                        //switch (i)
+                                        //{
+                                        //    case 0:
+                                        //        Dispatcher.Invoke(() => FirstThreadProg += 100);
+                                        //        break;
+                                        //    case 1:
+                                        //        Dispatcher.Invoke(() => SecondThreadProg += 100);
+                                        //        break;
+                                        //    case 2:
+                                        //        Dispatcher.Invoke(() => ThirdThreadProg += 100);
+                                        //        break;
+                                        //    case 3:
+                                        //        Dispatcher.Invoke(() => FourthThreadProg += 100);
+                                        //        break;
+                                        //    case 4:
+                                        //        Dispatcher.Invoke(() => FifthThreadProg += 100);
+                                        //        break;
+                                        //}
                                     }
                                 }
                             }
