@@ -247,10 +247,10 @@ namespace ZipFile
 
         //--------------------------------------------------------------------
 
-        //string fileText;
-
         List<byte[]> chunksList = new List<byte[]>();
         int parts;
+
+        int tempLengthFs = 0;
 
         private ICommand startCom;
         public ICommand StartCom
@@ -262,22 +262,27 @@ namespace ZipFile
                     startCom = new RelayCommand(
                         (param) =>
                         {
+                            tempLengthFs = 0;
+
                             using (var fs = new FileStream(FilePath, FileMode.Open))
                             {
                                 var chunkSize = (int)Math.Ceiling(fs.Length * 1.0 / parts);
                                 var toRead = (int)Math.Min(fs.Length - fs.Position, chunkSize);
+
                                 while (toRead > 0)
                                 {
-                                    //  Console.WriteLine(fs.Length - fs.Position + " " + toRead);
                                     var chunk = new byte[toRead];
                                     fs.Read(chunk, 0, toRead);
+                                    tempLengthFs += toRead;
                                     chunksList.Add(chunk);
                                     toRead = (int)Math.Min(fs.Length - fs.Position, toRead);
                                 }
                             }
 
-                            Zip();
-
+                            if (IsZip)
+                                Zip();
+                            else
+                                UnZip();
                             //Process.Start("explorer", FilePath.Substring(0, FilePath.LastIndexOf('\\')));
                         },
                         (param) =>
@@ -344,57 +349,93 @@ namespace ZipFile
 
         public void Zip()
         {
-            FirstThreadVis = Visibility.Visible;
-            WinHeight = 180;
+            var parts = chunksList.Count;
 
-            FirstThreadMaxProg = chunksList.Count;
-            FirstThreadProg = 0;
-            //ThreadPool.SetMinThreads(10, 10);
+            FirstThreadVis = Visibility.Visible;
+            SecondThreadVis = Visibility.Visible;
+            ThirdThreadVis = Visibility.Visible;
+            FourthThreadVis = Visibility.Visible;
+            FifthThreadVis = Visibility.Visible;
+
+            WinHeight = 300;
+
+            //FirstThreadMaxProg = tempLengthFs;
+
+            Dispatcher.Invoke(() => FirstThreadProg = 0);
+            Dispatcher.Invoke(() => SecondThreadProg = 0);
+            Dispatcher.Invoke(() => ThirdThreadProg = 0);
+            Dispatcher.Invoke(() => FourthThreadProg = 0);
+            Dispatcher.Invoke(() => FifthThreadProg = 0);
+
             Task.Run(() =>
             {
-                Parallel.For(0, chunksList.Count, new ParallelOptions
+                Parallel.For(0, parts, new ParallelOptions
                 {
-                    MaxDegreeOfParallelism = chunksList.Count
+                    MaxDegreeOfParallelism = parts
                 }, (i) =>
                 {
-                    //Console.WriteLine(Thread.CurrentThread.ManagedThreadId);
-
                     using (var wms = new MemoryStream())
                     {
                         using (var ds = new DeflateStream(wms, CompressionMode.Compress))
                         {
                             int count = 0;
                             var length = chunksList[i].Length;
-                            //Console.WriteLine(Thread.CurrentThread.ManagedThreadId + "|  " + i + "| " + count + " " + length);
 
+                            switch (i)
+                            {
+                                case 0:
+                                    FirstThreadMaxProg = chunksList[i].Length;
+                                    break;
+                                case 1:
+                                    SecondThreadMaxProg = chunksList[i].Length;
+                                    break;
+                                case 2:
+                                    ThirdThreadMaxProg = chunksList[i].Length;
+                                    break;
+                                case 3:
+                                    FourthThreadMaxProg = chunksList[i].Length;
+                                    break;
+                                case 4:
+                                    FifthThreadMaxProg = chunksList[i].Length;
+                                    break;
+                            }
 
-                            // Console.WriteLine(Thread.CurrentThread.ManagedThreadId + "|  " + i + "| " + count + " " + length);
-                            //   Console.ReadLine();
                             while (count < length)
                             {
                                 ds.WriteByte(chunksList[i][count]);
-
                                 count++;
 
-                                if (count % 1000000 == 0)
+                                if (count % 100 == 0)
                                 {
                                     lock (sync)
                                     {
-                                        Dispatcher.Invoke(() =>
+                                        switch (i)
                                         {
-                                            Thread.Sleep(10);
-                                            FirstThreadProg += 1;
-                                        });
+                                            case 0:
+                                                Dispatcher.Invoke(() => FirstThreadProg += 100);
+                                                break;
+                                            case 1:
+                                                Dispatcher.Invoke(() => SecondThreadProg += 100);
+                                                break;
+                                            case 2:
+                                                Dispatcher.Invoke(() => ThirdThreadProg += 100);
+                                                break;
+                                            case 3:
+                                                Dispatcher.Invoke(() => FourthThreadProg += 100);
+                                                break;
+                                            case 4:
+                                                Dispatcher.Invoke(() => FifthThreadProg += 100);
+                                                break;
+                                        }
                                     }
                                 }
-
                             }
                         }
 
                         chunksList[i] = wms.ToArray();
                     }
                 });
-            });
+            }).ContinueWith((param) => MessageBox.Show("Done!"));
         }
 
         //--------------------------------------------------------------------
@@ -417,56 +458,6 @@ namespace ZipFile
             //        }
             //    }
             //}
-        }
-
-        //--------------------------------------------------------------------
-
-        void ThreeThreadProgress()
-        {
-            FirstThreadVis = Visibility.Visible;
-            SecondThreadVis = Visibility.Visible;
-            ThirdThreadVis = Visibility.Visible;
-
-            WinHeight = 240;
-        }
-
-        //--------------------------------------------------------------------
-
-        void FourThreadProgress()
-        {
-            FirstThreadVis = Visibility.Visible;
-            SecondThreadVis = Visibility.Visible;
-            ThirdThreadVis = Visibility.Visible;
-            FourthThreadVis = Visibility.Visible;
-
-            WinHeight = 270;
-        }
-
-        //--------------------------------------------------------------------
-
-        void FiveThreadProgress()
-        {
-            FirstThreadVis = Visibility.Visible;
-            SecondThreadVis = Visibility.Visible;
-            ThirdThreadVis = Visibility.Visible;
-            FourthThreadVis = Visibility.Visible;
-            FifthThreadVis = Visibility.Visible;
-
-            WinHeight = 300;
-        }
-
-        //--------------------------------------------------------------------
-
-        void SixThreadProgress()
-        {
-            FirstThreadVis = Visibility.Visible;
-            SecondThreadVis = Visibility.Visible;
-            ThirdThreadVis = Visibility.Visible;
-            FourthThreadVis = Visibility.Visible;
-            FifthThreadVis = Visibility.Visible;
-            SixthThreadVis = Visibility.Visible;
-
-            WinHeight = 330;
         }
 
         //--------------------------------------------------------------------
