@@ -36,26 +36,13 @@
 			<Button Content="Отмена" Width="70" Margin="5 0" Command="{Binding CancelCom}"/>
 		</StackPanel>
 
-		<ListBox Grid.Row="3" ItemsSource="{Binding ProgressBars, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" HorizontalContentAlignment="Stretch">
+		<ListBox Grid.Row="3" ItemsSource="{Binding ProgressBars, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" HorizontalContentAlignment="Stretch" BorderThickness="0">
 			<ListBox.ItemTemplate>
 				<DataTemplate>
-					<Border Height="20">
 						<ProgressBar Height="20" Value="{Binding BarValue}" Maximum="{Binding BarMaxValue}"/>
-					</Border>
 				</DataTemplate>
 			</ListBox.ItemTemplate>
 		</ListBox>
-
-		<!--<StackPanel Grid.Row="3">
-
-			<ProgressBar Height="20" Visibility="{Binding FirstThreadVis}" Value="{Binding FirstThreadProg}" Margin="0 5" Maximum="{Binding FirstThreadMaxProg}"/>
-			<ProgressBar Height="20" Visibility="{Binding SecondThreadVis}" Value="{Binding SecondThreadProg}" Margin="0 5" Maximum="{Binding SecondThreadMaxProg}"/>
-			<ProgressBar Height="20" Visibility="{Binding ThirdThreadVis}" Value="{Binding ThirdThreadProg}" Margin="0 5" Maximum="{Binding ThirdThreadMaxProg}"/>
-			<ProgressBar Height="20" Visibility="{Binding FourthThreadVis}" Value="{Binding FourthThreadProg}" Margin="0 5" Maximum="{Binding FourthThreadMaxProg}"/>
-			<ProgressBar Height="20" Visibility="{Binding FifthThreadVis}" Value="{Binding FifthThreadProg}" Margin="0 5" Maximum="{Binding FifthThreadMaxProg}"/>-->
-		<!--<ProgressBar Height="20" Visibility="{Binding SixthThreadVis}" Value="{Binding SixthThreadProg}" Margin="0 5" Maximum="{Binding SixthThreadMaxProg}"/>-->
-
-		<!--</StackPanel>-->
 
 	</Grid>
 </Window>

@@ -18,17 +18,19 @@ namespace ZipFile
 {
     public partial class MainWindow : Window, INotifyPropertyChanged
     {
-        private ObservableCollection<ProgressBarItem> progressBars;
-        public ObservableCollection<ProgressBarItem> ProgressBars
-        {
-            get => progressBars;
-            set
-            {
-                progressBars = value;
-                OnPropertyChanged();
-            }
-        }
-        
+        //private ObservableCollection<ProgressBarItem> progressBars;
+        //public ObservableCollection<ProgressBarItem> ProgressBars
+        //{
+        //    get => progressBars;
+        //    set
+        //    {
+        //        progressBars = value;
+        //        OnPropertyChanged();
+        //    }
+        //}
+
+        public ObservableCollection<ProgressBarItem> ProgressBars { get; set; }
+
         private bool isZip = true;
         public bool IsZip
         {
@@ -62,136 +64,35 @@ namespace ZipFile
             }
         }
 
-        private Visibility firstThreadVis = Visibility.Collapsed;
-        public Visibility FirstThreadVis
+        private bool filePathIsEnable = true;
+        public bool FilePathIsEnable
         {
-            get => firstThreadVis;
+            get => filePathIsEnable;
             set
             {
-                firstThreadVis = value;
+                filePathIsEnable = value;
                 OnPropertyChanged();
             }
         }
 
-        private Visibility secondThreadVis = Visibility.Collapsed;
-        public Visibility SecondThreadVis
+        private bool keyEncDecIsEnable = true;
+        public bool KeyEncDecIsEnable
         {
-            get => secondThreadVis;
+            get => keyEncDecIsEnable;
             set
             {
-                secondThreadVis = value;
+                keyEncDecIsEnable = value;
                 OnPropertyChanged();
             }
-        }
-
-        private Visibility thirdThreadVis = Visibility.Collapsed;
-        public Visibility ThirdThreadVis
-        {
-            get => thirdThreadVis;
-            set
-            {
-                thirdThreadVis = value;
-                OnPropertyChanged();
-            }
-        }
-
-        private Visibility fourthThreadVis = Visibility.Collapsed;
-        public Visibility FourthThreadVis
-        {
-            get => fourthThreadVis;
-            set
-            {
-                fourthThreadVis = value;
-                OnPropertyChanged();
-            }
-        }
-
-        private Visibility fifthThreadVis = Visibility.Collapsed;
-        public Visibility FifthThreadVis
-        {
-            get => fifthThreadVis;
-            set
-            {
-                fifthThreadVis = value;
-                OnPropertyChanged();
-            }
-        }
-
-        private double firstThreadProg;
-        public double FirstThreadProg
-        {
-            get { return firstThreadProg; }
-            set { firstThreadProg = value; OnPropertyChanged(); }
-        }
-
-        private double secondThreadProg;
-        public double SecondThreadProg
-        {
-            get { return secondThreadProg; }
-            set { secondThreadProg = value; OnPropertyChanged(); }
-        }
-
-        private double thirdThreadProg;
-        public double ThirdThreadProg
-        {
-            get { return thirdThreadProg; }
-            set { thirdThreadProg = value; OnPropertyChanged(); }
-        }
-
-        private double fourthThreadProg;
-        public double FourthThreadProg
-        {
-            get { return fourthThreadProg; }
-            set { fourthThreadProg = value; OnPropertyChanged(); }
-        }
-
-        private double fifthThreadProg;
-        public double FifthThreadProg
-        {
-            get { return fifthThreadProg; }
-            set { fifthThreadProg = value; OnPropertyChanged(); }
-        }
-
-        private double firstThreadMaxProg;
-        public double FirstThreadMaxProg
-        {
-            get { return firstThreadMaxProg; }
-            set { firstThreadMaxProg = value; OnPropertyChanged(); }
-        }
-
-        private double secondThreadMaxProg;
-        public double SecondThreadMaxProg
-        {
-            get { return secondThreadMaxProg; }
-            set { secondThreadMaxProg = value; OnPropertyChanged(); }
-        }
-
-        private double thirdThreadMaxProg;
-        public double ThirdThreadMaxProg
-        {
-            get { return thirdThreadMaxProg; }
-            set { thirdThreadMaxProg = value; OnPropertyChanged(); }
-        }
-
-        private double fourthThreadMaxProg;
-        public double FourthThreadMaxProg
-        {
-            get { return fourthThreadMaxProg; }
-            set { fourthThreadMaxProg = value; OnPropertyChanged(); }
-        }
-
-        private double fifthThreadMaxProg;
-        public double FifthThreadMaxProg
-        {
-            get { return fifthThreadMaxProg; }
-            set { fifthThreadMaxProg = value; OnPropertyChanged(); }
         }
 
         public double chunkSize { get; set; }
 
-        //--------------------------------------------------------------------
-
         OpenFileDialog OpenFile;
+        ParallelOptions options;
+        CancellationTokenSource cancelToken;
+
+        //--------------------------------------------------------------------
 
         public MainWindow()
         {
@@ -199,6 +100,8 @@ namespace ZipFile
 
             this.DataContext = this;
             ProgressBars = new ObservableCollection<ProgressBarItem>();
+            options = new ParallelOptions();
+            cancelToken = new CancellationTokenSource();
 
             OpenFile = new OpenFileDialog();
             OpenFile.InitialDirectory = AppDomain.CurrentDomain.BaseDirectory;
@@ -225,6 +128,20 @@ namespace ZipFile
                             if (OpenFile.ShowDialog() == true)
                             {
                                 FilePath = OpenFile.FileName;
+
+                                using (var fs = new FileStream(FilePath, FileMode.Open))
+                                {
+                                    var chunkSize = (int)Math.Ceiling(fs.Length * 1.0 / parts);
+                                    var toRead = (int)Math.Min(fs.Length - fs.Position, chunkSize);
+
+                                    while (toRead > 0)
+                                    {
+                                        var chunk = new byte[toRead];
+                                        fs.Read(chunk, 0, toRead);
+                                        chunksList.Add(chunk);
+                                        toRead = (int)Math.Min(fs.Length - fs.Position, toRead);
+                                    }
+                                }
                             }
                         });
                 }
@@ -238,8 +155,6 @@ namespace ZipFile
         List<byte[]> chunksList = new List<byte[]>();
         int parts;
 
-        int tempLengthFs = 0;
-
         private ICommand startCom;
         public ICommand StartCom
         {
@@ -250,27 +165,11 @@ namespace ZipFile
                     startCom = new RelayCommand(
                         (param) =>
                         {
-                            tempLengthFs = 0;
+                            FilePathIsEnable = false;
+                            KeyEncDecIsEnable = false;
 
-                            using (var fs = new FileStream(FilePath, FileMode.Open))
-                            {
-                                var chunkSize = (int)Math.Ceiling(fs.Length * 1.0 / parts);
-                                var toRead = (int)Math.Min(fs.Length - fs.Position, chunkSize);
+                            ZipUnZip(IsZip);
 
-                                while (toRead > 0)
-                                {
-                                    var chunk = new byte[toRead];
-                                    fs.Read(chunk, 0, toRead);
-                                    tempLengthFs += toRead;
-                                    chunksList.Add(chunk);
-                                    toRead = (int)Math.Min(fs.Length - fs.Position, toRead);
-                                }
-                            }
-
-                            if (IsZip)
-                                Zip();
-                            else
-                                UnZip();
                             //Process.Start("explorer", FilePath.Substring(0, FilePath.LastIndexOf('\\')));
                         },
                         (param) =>
@@ -288,7 +187,7 @@ namespace ZipFile
 
         //--------------------------------------------------------------------
 
-        bool change = true;
+        private object pause = new object();
 
         private ICommand cancelCom;
         public ICommand CancelCom
@@ -298,30 +197,22 @@ namespace ZipFile
                 if (cancelCom is null)
                 {
                     cancelCom = new RelayCommand(
+                        async (param) =>
+                        {
+                            await Task.Yield();
+                            lock (sync)
+                            {
+                                var result = MessageBox.Show("Do u want to cancel ecrypt?", "Alert", MessageBoxButton.YesNo);
+
+                                if (result == MessageBoxResult.Yes)
+                                {
+                                    cancelToken.Cancel();
+                                }
+                            }
+                        },
                         (param) =>
                         {
-                            if (change)
-                            {
-                                FirstThreadVis = Visibility.Visible;
-                                SecondThreadVis = Visibility.Visible;
-                                ThirdThreadVis = Visibility.Visible;
-                                FourthThreadVis = Visibility.Visible;
-                                FifthThreadVis = Visibility.Visible;
-
-                                WinHeight = 330;
-                            }
-                            else
-                            {
-                                FirstThreadVis = Visibility.Collapsed;
-                                SecondThreadVis = Visibility.Collapsed;
-                                ThirdThreadVis = Visibility.Collapsed;
-                                FourthThreadVis = Visibility.Collapsed;
-                                FifthThreadVis = Visibility.Collapsed;
-
-                                WinHeight = 160;
-                            }
-
-                            change = !change;
+                            return true;
                         });
                 }
 
@@ -333,72 +224,40 @@ namespace ZipFile
 
         private object sync = new object();
 
-        public void Zip()
+        public void ZipUnZip(bool mode)
         {
             var parts = chunksList.Count;
 
+            ProgressBars.Clear();
+
             for (int i = 0; i < parts; i++)
             {
-                ProgressBarItem item = new ProgressBarItem
-                {
-                    BarValue = 20,
-                    BarMaxValue = 100
-                };
+                ProgressBars.Add(new ProgressBarItem { BarValue = 0 });
 
-                ProgressBars.Add(item);
+                WinHeight += 25;
             }
 
-            //FirstThreadVis = Visibility.Visible;
-            //SecondThreadVis = Visibility.Visible;
-            //ThirdThreadVis = Visibility.Visible;
-            //FourthThreadVis = Visibility.Visible;
-            //FifthThreadVis = Visibility.Visible;
-
-            WinHeight = 300;
-
-            //FirstThreadMaxProg = tempLengthFs;
-
-            //Dispatcher.Invoke(() => FirstThreadProg = 0);
-            //Dispatcher.Invoke(() => SecondThreadProg = 0);
-            //Dispatcher.Invoke(() => ThirdThreadProg = 0);
-            //Dispatcher.Invoke(() => FourthThreadProg = 0);
-            //Dispatcher.Invoke(() => FifthThreadProg = 0);
+            options.CancellationToken = cancelToken.Token;
+            options.MaxDegreeOfParallelism = parts;
 
             Task.Run(() =>
             {
-                Parallel.For(0, parts, new ParallelOptions
-                {
-                    MaxDegreeOfParallelism = 5
-                }, (i) =>
+                Parallel.For(0, parts, options, (i) =>
                 {
                     using (var wms = new MemoryStream())
                     {
-                        using (var ds = new DeflateStream(wms, CompressionMode.Compress))
+                        using (var ds = new DeflateStream(wms, (mode == true ? CompressionMode.Compress : CompressionMode.Decompress))) // CompresionLevel.Optimal
                         {
                             int count = 0;
                             var length = chunksList[i].Length;
 
-                            //switch (i)
-                            //{
-                            //    case 0:
-                            //        FirstThreadMaxProg = chunksList[i].Length;
-                            //        break;
-                            //    case 1:
-                            //        SecondThreadMaxProg = chunksList[i].Length;
-                            //        break;
-                            //    case 2:
-                            //        ThirdThreadMaxProg = chunksList[i].Length;
-                            //        break;
-                            //    case 3:
-                            //        FourthThreadMaxProg = chunksList[i].Length;
-                            //        break;
-                            //    case 4:
-                            //        FifthThreadMaxProg = chunksList[i].Length;
-                            //        break;
-                            //}
+                            ProgressBars[i].BarMaxValue = chunksList[i].Length;
 
                             while (count < length)
                             {
+
+                                options.CancellationToken.ThrowIfCancellationRequested();
+
                                 ds.WriteByte(chunksList[i][count]);
                                 count++;
 
@@ -408,24 +267,7 @@ namespace ZipFile
                                     {
                                         Thread.Sleep(10);
 
-                                        //switch (i)
-                                        //{
-                                        //    case 0:
-                                        //        Dispatcher.Invoke(() => FirstThreadProg += 100);
-                                        //        break;
-                                        //    case 1:
-                                        //        Dispatcher.Invoke(() => SecondThreadProg += 100);
-                                        //        break;
-                                        //    case 2:
-                                        //        Dispatcher.Invoke(() => ThirdThreadProg += 100);
-                                        //        break;
-                                        //    case 3:
-                                        //        Dispatcher.Invoke(() => FourthThreadProg += 100);
-                                        //        break;
-                                        //    case 4:
-                                        //        Dispatcher.Invoke(() => FifthThreadProg += 100);
-                                        //        break;
-                                        //}
+                                        Dispatcher.Invoke(() => ProgressBars[i].BarValue += 100);
                                     }
                                 }
                             }
@@ -435,28 +277,6 @@ namespace ZipFile
                     }
                 });
             }).ContinueWith((param) => MessageBox.Show("Done!"));
-        }
-
-        //--------------------------------------------------------------------
-
-        public void UnZip()
-        {
-            //using (var fs = new FileStream(FilePath + ".zip", FileMode.Open))
-            //{
-            //    using (var ds = new DeflateStream(fs, CompressionMode.Decompress))
-            //    {
-            //        using (var br = new BinaryReader(ds))
-            //        {
-            //            var count = br.ReadInt32();
-            //            for (var i = 0; i < count; ++i)
-            //            {
-            //                var len = br.ReadInt32();
-            //                var chunk = br.ReadBytes(len);
-            //                chunksQueue.Enqueue(chunk);
-            //            }
-            //        }
-            //    }
-            //}
         }
 
         //--------------------------------------------------------------------
