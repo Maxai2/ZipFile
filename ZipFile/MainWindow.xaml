@@ -42,6 +42,24 @@
 						<ProgressBar Height="20" Value="{Binding BarValue}" Maximum="{Binding BarMaxValue}"/>
 				</DataTemplate>
 			</ListBox.ItemTemplate>
+
+			<ListBox.Resources>
+				<Style TargetType="ListBoxItem">
+					<Style.Resources>
+						<!-- SelectedItem with focus -->
+						<SolidColorBrush x:Key="{x:Static SystemColors.HighlightBrushKey}"
+                       Color="Transparent" />
+						<!-- SelectedItem without focus -->
+						<SolidColorBrush x:Key="{x:Static SystemColors.ControlBrushKey}"
+                       Color="Transparent" />
+						<!-- SelectedItem text foreground -->
+						<SolidColorBrush x:Key="{x:Static SystemColors.HighlightTextBrushKey}"
+                       Color="Black" />
+					</Style.Resources>
+					<Setter Property="FocusVisualStyle" Value="{x:Null}" />
+				</Style>
+			</ListBox.Resources>
+
 		</ListBox>
 
 	</Grid>

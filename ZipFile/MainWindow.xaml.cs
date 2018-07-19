@@ -18,17 +18,6 @@ namespace ZipFile
 {
     public partial class MainWindow : Window, INotifyPropertyChanged
     {
-        //private ObservableCollection<ProgressBarItem> progressBars;
-        //public ObservableCollection<ProgressBarItem> ProgressBars
-        //{
-        //    get => progressBars;
-        //    set
-        //    {
-        //        progressBars = value;
-        //        OnPropertyChanged();
-        //    }
-        //}
-
         public ObservableCollection<ProgressBarItem> ProgressBars { get; set; }
 
         private bool isZip = true;
@@ -92,6 +81,10 @@ namespace ZipFile
         ParallelOptions options;
         CancellationTokenSource cancelToken;
 
+        List<byte[]> chunksList;
+        int parts;
+        bool StartState = false;
+
         //--------------------------------------------------------------------
 
         public MainWindow()
@@ -100,6 +93,8 @@ namespace ZipFile
 
             this.DataContext = this;
             ProgressBars = new ObservableCollection<ProgressBarItem>();
+            chunksList = new List<byte[]>();
+
             options = new ParallelOptions();
             cancelToken = new CancellationTokenSource();
 
@@ -152,9 +147,6 @@ namespace ZipFile
 
         //--------------------------------------------------------------------
 
-        List<byte[]> chunksList = new List<byte[]>();
-        int parts;
-
         private ICommand startCom;
         public ICommand StartCom
         {
@@ -165,6 +157,8 @@ namespace ZipFile
                     startCom = new RelayCommand(
                         (param) =>
                         {
+                            StartState = true;
+
                             FilePathIsEnable = false;
                             KeyEncDecIsEnable = false;
 
@@ -174,6 +168,9 @@ namespace ZipFile
                         },
                         (param) =>
                         {
+                            if (StartState)
+                                return false;
+
                             if (FilePath == "")
                                 return false;
                             else
@@ -197,9 +194,9 @@ namespace ZipFile
                 if (cancelCom is null)
                 {
                     cancelCom = new RelayCommand(
-                        async (param) =>
+                        (param) =>
                         {
-                            await Task.Yield();
+                            //await Task.Yield();
                             lock (sync)
                             {
                                 var result = MessageBox.Show("Do u want to cancel ecrypt?", "Alert", MessageBoxButton.YesNo);
@@ -212,7 +209,10 @@ namespace ZipFile
                         },
                         (param) =>
                         {
-                            return true;
+                            if (StartState)
+                                return true;
+                            else
+                                return false;
                         });
                 }
 
@@ -276,7 +276,30 @@ namespace ZipFile
                         chunksList[i] = wms.ToArray();
                     }
                 });
-            }).ContinueWith((param) => MessageBox.Show("Done!"));
+            }).ContinueWith(
+                (param) =>
+                {
+                    using (var ms = new FileStream(FilePath, FileMode.Open))
+                    {
+                        using(var bw = new BinaryWriter(ms))
+                        {
+                            bw.Write(chunksList.Count);
+                            foreach (var item in chunksList)
+                            {
+                                bw.Write(item.Length);
+                                bw.Write(item);
+                            }
+                        }
+                    }
+
+                    MessageBox.Show("Done!");
+
+                    FilePathIsEnable = true;
+                    KeyEncDecIsEnable = true;
+
+                    ProgressBars.Clear();
+                    WinHeight = 160;
+                });
         }
 
         //--------------------------------------------------------------------
