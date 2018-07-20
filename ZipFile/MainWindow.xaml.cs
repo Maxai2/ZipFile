@@ -197,7 +197,7 @@ namespace ZipFile
                         (param) =>
                         {
                             //await Task.Yield();
-                            lock (sync)
+                            lock (pause)
                             {
                                 var result = MessageBox.Show("Do u want to cancel ecrypt?", "Alert", MessageBoxButton.YesNo);
 
@@ -240,32 +240,32 @@ namespace ZipFile
             options.CancellationToken = cancelToken.Token;
             options.MaxDegreeOfParallelism = parts;
 
+            var DeflateMode = (mode == true) ? CompressionMode.Compress : CompressionMode.Decompress; // CompresionLevel.Optimal
+
             Task.Run(() =>
             {
                 Parallel.For(0, parts, options, (i) =>
                 {
                     using (var wms = new MemoryStream())
                     {
-                        using (var ds = new DeflateStream(wms, (mode == true ? CompressionMode.Compress : CompressionMode.Decompress))) // CompresionLevel.Optimal
+                        using (var ds = new DeflateStream(wms, DeflateMode))
                         {
                             int count = 0;
                             var length = chunksList[i].Length;
 
-                            ProgressBars[i].BarMaxValue = chunksList[i].Length;
+                            ProgressBars[i].BarMaxValue = length;
 
                             while (count < length)
                             {
-
                                 options.CancellationToken.ThrowIfCancellationRequested();
 
-                                ds.WriteByte(chunksList[i][count]);
-                                count++;
+                                ds.WriteByte(chunksList[i][++count]);
 
                                 if (count % 100 == 0)
                                 {
                                     lock (sync)
                                     {
-                                        Thread.Sleep(10);
+                                        Thread.Sleep(2);
 
                                         Dispatcher.Invoke(() => ProgressBars[i].BarValue += 100);
                                     }
@@ -281,7 +281,7 @@ namespace ZipFile
                 {
                     using (var ms = new FileStream(FilePath, FileMode.Open))
                     {
-                        using(var bw = new BinaryWriter(ms))
+                        using (var bw = new BinaryWriter(ms))
                         {
                             bw.Write(chunksList.Count);
                             foreach (var item in chunksList)
