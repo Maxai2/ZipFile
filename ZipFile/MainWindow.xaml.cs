@@ -269,7 +269,7 @@ namespace ZipFile
                                         Dispatcher.Invoke(() => ProgressBars[i].BarValue += 100);
                                     }
 
-                                    Thread.Sleep(7);
+                                    Thread.Sleep(10);
                                 }
                             }
                         }
