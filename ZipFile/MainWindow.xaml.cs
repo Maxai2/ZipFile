@@ -233,7 +233,7 @@ namespace ZipFile
 
             for (int i = 0; i < parts; i++)
             {
-                ProgressBars.Add(new ProgressBarItem { BarValue = 0 });
+                ProgressBars.Add(new ProgressBarItem { BarValue = 0, BarMaxValue = 100 });
 
                 WinHeight += 25;
             }
