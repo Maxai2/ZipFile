@@ -124,19 +124,6 @@ namespace ZipFile
                             {
                                 FilePath = OpenFile.FileName;
 
-                                using (var fs = new FileStream(FilePath, FileMode.Open))
-                                {
-                                    var chunkSize = (int)Math.Ceiling(fs.Length * 1.0 / parts);
-                                    var toRead = (int)Math.Min(fs.Length - fs.Position, chunkSize);
-
-                                    while (toRead > 0)
-                                    {
-                                        var chunk = new byte[toRead];
-                                        fs.Read(chunk, 0, toRead);
-                                        chunksList.Add(chunk);
-                                        toRead = (int)Math.Min(fs.Length - fs.Position, toRead);
-                                    }
-                                }
                             }
                         });
                 }
@@ -157,6 +144,20 @@ namespace ZipFile
                     startCom = new RelayCommand(
                         (param) =>
                         {
+                            using (var fs = new FileStream(FilePath, FileMode.Open))
+                            {
+                                var chunkSize = (int)Math.Ceiling(fs.Length * 1.0 / parts);
+                                var toRead = (int)Math.Min(fs.Length - fs.Position, chunkSize);
+
+                                while (toRead > 0)
+                                {
+                                    var chunk = new byte[toRead];
+                                    fs.Read(chunk, 0, toRead);
+                                    chunksList.Add(chunk);
+                                    toRead = (int)Math.Min(fs.Length - fs.Position, toRead);
+                                }
+                            }
+
                             StartState = true;
 
                             FilePathIsEnable = false;
@@ -263,12 +264,12 @@ namespace ZipFile
 
                                 if (count % 100 == 0)
                                 {
-                                    lock (sync)
+                                    lock (pause)
                                     {
-                                        Thread.Sleep(2);
-
                                         Dispatcher.Invoke(() => ProgressBars[i].BarValue += 100);
                                     }
+
+                                    Thread.Sleep(7);
                                 }
                             }
                         }
@@ -279,26 +280,35 @@ namespace ZipFile
             }).ContinueWith(
                 (param) =>
                 {
-                    using (var ms = new FileStream(FilePath, FileMode.Open))
+                    if (!param.IsFaulted)
                     {
-                        using (var bw = new BinaryWriter(ms))
+                        using (var ms = new FileStream(FilePath, FileMode.Open))
                         {
-                            bw.Write(chunksList.Count);
-                            foreach (var item in chunksList)
+                            using (var bw = new BinaryWriter(ms))
                             {
-                                bw.Write(item.Length);
-                                bw.Write(item);
+                                bw.Write(chunksList.Count);
+                                foreach (var item in chunksList)
+                                {
+                                    bw.Write(item.Length);
+                                    bw.Write(item);
+                                }
                             }
                         }
-                    }
 
-                    MessageBox.Show("Done!");
+                        MessageBox.Show("Done!");
+                    }
+                    else
+                        MessageBox.Show("Cancelled!");
 
                     FilePathIsEnable = true;
                     KeyEncDecIsEnable = true;
 
-                    ProgressBars.Clear();
+                    Dispatcher.Invoke(() => ProgressBars.Clear());
+
                     WinHeight = 160;
+
+                    StartState = false;
+
                 });
         }
 
