@@ -229,7 +229,7 @@ namespace ZipFile
         {
             var parts = chunksList.Count;
 
-            ProgressBars.Clear();
+            Dispatcher.Invoke(() => ProgressBars.Clear());
 
             for (int i = 0; i < parts; i++)
             {
@@ -261,6 +261,7 @@ namespace ZipFile
                                 options.CancellationToken.ThrowIfCancellationRequested();
 
                                 ds.WriteByte(chunksList[i][++count]);
+                                //ds.ReadByte(chunksList[i][++count]);
 
                                 if (count % 100 == 0)
                                 {
@@ -304,6 +305,7 @@ namespace ZipFile
                     KeyEncDecIsEnable = true;
 
                     Dispatcher.Invoke(() => ProgressBars.Clear());
+                    chunksList.Clear();
 
                     WinHeight = 160;
 
