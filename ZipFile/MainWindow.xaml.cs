@@ -197,7 +197,6 @@ namespace ZipFile
                     cancelCom = new RelayCommand(
                         (param) =>
                         {
-                            //await Task.Yield();
                             lock (pause)
                             {
                                 var result = MessageBox.Show("Do u want to cancel ecrypt?", "Alert", MessageBoxButton.YesNo);
@@ -241,43 +240,79 @@ namespace ZipFile
             options.CancellationToken = cancelToken.Token;
             options.MaxDegreeOfParallelism = parts;
 
-            var DeflateMode = (mode == true) ? CompressionMode.Compress : CompressionMode.Decompress; // CompresionLevel.Optimal
-
             Task.Run(() =>
             {
-                Parallel.For(0, parts, options, (i) =>
+                if (mode)
                 {
-                    using (var wms = new MemoryStream())
+                    Parallel.For(0, parts, options, (i) =>
                     {
-                        using (var ds = new DeflateStream(wms, DeflateMode))
+                        using (var wms = new MemoryStream())
                         {
-                            int count = 0;
-                            var length = chunksList[i].Length;
-
-                            ProgressBars[i].BarMaxValue = length;
-
-                            while (count < length)
+                            using (var ds = new DeflateStream(wms, CompressionLevel.Optimal))
                             {
-                                options.CancellationToken.ThrowIfCancellationRequested();
+                                int count = 0;
+                                var length = chunksList[i].Length;
 
-                                ds.WriteByte(chunksList[i][++count]);
-                                //ds.ReadByte(chunksList[i][++count]);
+                                ProgressBars[i].BarMaxValue = length;
 
-                                if (count % 100 == 0)
+                                while (count < length)
                                 {
-                                    lock (pause)
-                                    {
-                                        Dispatcher.Invoke(() => ProgressBars[i].BarValue += 100);
-                                    }
+                                    options.CancellationToken.ThrowIfCancellationRequested();
 
-                                    Thread.Sleep(10);
+                                    ds.WriteByte(chunksList[i][++count]);
+
+                                    if (count % 100 == 0)
+                                    {
+                                        lock (pause)
+                                        {
+                                            Dispatcher.Invoke(() => ProgressBars[i].BarValue += 100);
+                                        }
+
+                                        Thread.Sleep(100);
+                                    }
                                 }
                             }
-                        }
 
-                        chunksList[i] = wms.ToArray();
-                    }
-                });
+                            chunksList[i] = wms.ToArray();
+                        }
+                    });
+                }
+                else
+                {
+                    Parallel.For(0, parts, options, (i) =>
+                    {
+                        using (var wms = new MemoryStream(chunksList[i]))
+                        {
+                            using (var ds = new DeflateStream(wms, CompressionMode.Decompress))
+                            {
+                                int count = 0;
+                                var length = chunksList[i].Length;
+
+                                ProgressBars[i].BarMaxValue = length;
+
+                                while (count < length)
+                                {
+                                    options.CancellationToken.ThrowIfCancellationRequested();
+
+                                    ds.ReadByte();
+                                    count++;
+                                    if (count % 100 == 0)
+                                    {
+                                        lock (pause)
+                                        {
+                                            Dispatcher.Invoke(() => ProgressBars[i].BarValue += 100);
+                                        }
+
+                                        Thread.Sleep(10);
+                                    }
+                                }
+                            }
+
+                            chunksList[i] = wms.ToArray();
+                        }
+                    });
+
+                }
             }).ContinueWith(
                 (param) =>
                 {
