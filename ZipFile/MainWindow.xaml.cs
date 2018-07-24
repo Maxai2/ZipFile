@@ -268,7 +268,7 @@ namespace ZipFile
                                             Dispatcher.Invoke(() => ProgressBars[i].BarValue += 100);
                                         }
 
-                                        Thread.Sleep(100);
+                                        Thread.Sleep(20);
                                     }
                                 }
                             }
@@ -303,7 +303,7 @@ namespace ZipFile
                                             Dispatcher.Invoke(() => ProgressBars[i].BarValue += 100);
                                         }
 
-                                        Thread.Sleep(10);
+                                        Thread.Sleep(20);
                                     }
                                 }
                             }
