@@ -3,15 +3,12 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
-using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
 using System.Runtime.CompilerServices;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
-using System.Windows.Controls;
 using System.Windows.Input;
 
 namespace ZipFile
@@ -227,11 +224,11 @@ namespace ZipFile
 
         public void ZipUnZip(bool mode)
         {
-            var parts = chunksList.Count;
+            var ListCount = chunksList.Count;
 
             Dispatcher.Invoke(() => ProgressBars.Clear());
 
-            for (int i = 0; i < parts; i++)
+            for (int i = 0; i < ListCount; i++)
             {
                 ProgressBars.Add(new ProgressBarItem { BarValue = 0, BarMaxValue = 100 });
 
@@ -239,20 +236,22 @@ namespace ZipFile
             }
 
             options.CancellationToken = cancelToken.Token;
-            options.MaxDegreeOfParallelism = parts;
+            options.MaxDegreeOfParallelism = ListCount;
 
             Task.Run(() =>
             {
                 if (mode)
                 {
-                    Parallel.For(0, parts, options, (i) =>
+                    Parallel.For(0, ListCount, options, (i) =>
                     {
                         using (var wms = new MemoryStream())
                         {
                             using (var ds = new DeflateStream(wms, CompressionLevel.Optimal))
                             {
-                                int count = 0, temCountArr = 0;
+                                int count = 0;
                                 var length = chunksList[i].Length;
+                                var tempL = length;
+                                byte[] tempArr = null;
 
                                 ProgressBars[i].BarMaxValue = length;
 
@@ -260,16 +259,22 @@ namespace ZipFile
                                 {
                                     options.CancellationToken.ThrowIfCancellationRequested();
 
-                                    var temArr = new byte[100];
-
-                                    for (int j = 0; )
+                                    if (tempL - 100 > 0)
                                     {
-                                        temArr[temCountArr] = chunksList[i][count++];
+                                        tempArr = new byte[100];
+                                        tempL -= 100;
+                                    }
+                                    else
+                                        tempArr = new byte[tempL];
+
+                                    for (int j = 0; j < tempArr.Length; ++j)
+                                    {
+                                        tempArr[j] = chunksList[i][count++];
                                     }
 
                                     //ds.WriteByte(chunksList[i][count++]);
 
-                                    ds.Write(temArr, 0, )
+                                    ds.Write(tempArr, 0, tempArr.Length);
 
                                     if (count % 100 == 0)
                                     {
@@ -289,7 +294,7 @@ namespace ZipFile
                 }
                 else
                 {
-                    Parallel.For(0, parts, options, (i) =>
+                    Parallel.For(0, ListCount, options, (i) =>
                     {
                         using (var wms = new MemoryStream(chunksList[i]))
                         {
