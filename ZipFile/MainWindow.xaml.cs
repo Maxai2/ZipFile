@@ -124,6 +124,21 @@ namespace ZipFile
                             {
                                 FilePath = OpenFile.FileName;
 
+                                using (var fs = new FileStream(FilePath, FileMode.Open))
+                                {
+                                    fs.Seek(0, SeekOrigin.Begin);
+
+                                    var chunkSize = (int)Math.Ceiling(fs.Length * 1.0 / parts);
+                                    var toRead = (int)Math.Min(fs.Length - fs.Position, chunkSize);
+
+                                    while (toRead > 0)
+                                    {
+                                        var chunk = new byte[toRead];
+                                        fs.Read(chunk, 0, toRead);
+                                        chunksList.Add(chunk);
+                                        toRead = (int)Math.Min(fs.Length - fs.Position, toRead);
+                                    }
+                                }
                             }
                         });
                 }
@@ -144,20 +159,6 @@ namespace ZipFile
                     startCom = new RelayCommand(
                         (param) =>
                         {
-                            using (var fs = new FileStream(FilePath, FileMode.Open))
-                            {
-                                var chunkSize = (int)Math.Ceiling(fs.Length * 1.0 / parts);
-                                var toRead = (int)Math.Min(fs.Length - fs.Position, chunkSize);
-
-                                while (toRead > 0)
-                                {
-                                    var chunk = new byte[toRead];
-                                    fs.Read(chunk, 0, toRead);
-                                    chunksList.Add(chunk);
-                                    toRead = (int)Math.Min(fs.Length - fs.Position, toRead);
-                                }
-                            }
-
                             StartState = true;
 
                             FilePathIsEnable = false;
@@ -250,7 +251,7 @@ namespace ZipFile
                         {
                             using (var ds = new DeflateStream(wms, CompressionLevel.Optimal))
                             {
-                                int count = 0;
+                                int count = 0, temCountArr = 0;
                                 var length = chunksList[i].Length;
 
                                 ProgressBars[i].BarMaxValue = length;
@@ -259,7 +260,16 @@ namespace ZipFile
                                 {
                                     options.CancellationToken.ThrowIfCancellationRequested();
 
-                                    ds.WriteByte(chunksList[i][++count]);
+                                    var temArr = new byte[100];
+
+                                    for (int j = 0; )
+                                    {
+                                        temArr[temCountArr] = chunksList[i][count++];
+                                    }
+
+                                    //ds.WriteByte(chunksList[i][count++]);
+
+                                    ds.Write(temArr, 0, )
 
                                     if (count % 100 == 0)
                                     {
